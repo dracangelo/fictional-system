@@ -460,6 +460,37 @@ class PaymentService:
             raise last_error
         
         raise PaymentProcessingError("Payment retry failed")
+    
+    @staticmethod
+    def process_refund(
+        booking: Booking,
+        amount: Optional[Decimal] = None,
+        reason: str = 'requested_by_customer'
+    ) -> Dict[str, Any]:
+        """
+        Process a refund for a booking (alias for create_refund)
+        
+        Args:
+            booking: Booking instance to refund
+            amount: Optional partial refund amount (defaults to full refund)
+            reason: Reason for refund
+            
+        Returns:
+            Dictionary containing refund result with success status
+        """
+        try:
+            refund_result = PaymentService.create_refund(booking, amount, reason)
+            return {
+                'success': True,
+                'refund_id': refund_result['refund_id'],
+                'amount': refund_result['amount'],
+                'message': 'Refund processed successfully'
+            }
+        except RefundError as e:
+            return {
+                'success': False,
+                'message': str(e)
+            }
 
 
 class WebhookService:

@@ -4,8 +4,11 @@ from . import views, ticket_views, payment_views, webhook_views
 
 app_name = 'bookings'
 
-# Create router for ViewSets (if we add any later)
+# Create router for ViewSets
 router = DefaultRouter()
+router.register(r'customer-bookings', views.CustomerBookingViewSet, basename='customer-bookings')
+router.register(r'reviews', views.CustomerReviewViewSet, basename='reviews')
+router.register(r'waitlist', views.WaitlistViewSet, basename='waitlist')
 
 urlpatterns = [
     # Include router URLs
@@ -38,4 +41,8 @@ urlpatterns = [
     path('webhooks/stripe/', webhook_views.stripe_webhook_endpoint, name='stripe_webhook'),
     path('webhooks/stripe/class/', webhook_views.StripeWebhookView.as_view(), name='stripe_webhook_class'),
     path('webhooks/health/', webhook_views.webhook_health_check, name='webhook_health_check'),
+    
+    # Customer booking management endpoints
+    path('history/summary/', views.booking_history_summary, name='booking_history_summary'),
+    path('upcoming/', views.upcoming_bookings, name='upcoming_bookings'),
 ]
