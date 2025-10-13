@@ -9,6 +9,12 @@ from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal
 
+from movie_booking_app.cached_views import (
+    CachedViewMixin, PerformanceMonitoringMixin, OptimizedQuerysetMixin,
+    cache_search_results, cache_analytics, cache_list_view, cache_detail_view
+)
+from movie_booking_app.cache_utils import monitor_query_performance
+
 from .models import Event, TicketType, Discount
 from .serializers import (
     EventListSerializer, EventDetailSerializer, EventCreateUpdateSerializer,
@@ -20,7 +26,8 @@ from .services import DiscountService, BookingPriceCalculator
 from users.permissions import IsEventOwner, IsOwnerOrReadOnly, CanManageOwnContent
 
 
-class EventViewSet(viewsets.ModelViewSet):
+class EventViewSet(CachedViewMixin, PerformanceMonitoringMixin, 
+                   OptimizedQuerysetMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing events with CRUD operations and owner-based filtering
     """
@@ -30,6 +37,11 @@ class EventViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'description', 'venue', 'address']
     ordering_fields = ['start_datetime', 'created_at', 'title']
     ordering = ['-start_datetime']
+    
+    # Caching configuration
+    cache_timeout = 300  # 5 minutes for list views
+    cache_key_prefix = 'events'
+    cache_per_user = False
     
     def get_serializer_class(self):
         """Return appropriate serializer based on action"""
@@ -145,6 +157,8 @@ class EventViewSet(viewsets.ModelViewSet):
         return queryset
     
     @action(detail=True, methods=['get'])
+    @cache_analytics(timeout=900)
+    @monitor_query_performance
     def analytics(self, request, pk=None):
         """Get analytics data for a specific event"""
         event = self.get_object()

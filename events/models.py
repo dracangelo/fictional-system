@@ -5,8 +5,11 @@ from django.utils import timezone
 from decimal import Decimal
 import uuid
 
+from movie_booking_app.managers import OptimizedEventManager
+from movie_booking_app.cache_utils import CacheInvalidationMixin
 
-class Event(models.Model):
+
+class Event(CacheInvalidationMixin, models.Model):
     """Event model for managing events with ticketing capabilities"""
     
     STATUS_CHOICES = [
@@ -72,6 +75,9 @@ class Event(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    # Custom manager
+    objects = OptimizedEventManager()
+    
     class Meta:
         db_table = 'events'
         verbose_name = 'Event'
@@ -136,7 +142,7 @@ class Event(models.Model):
         return self.total_tickets_available - self.total_tickets_sold
 
 
-class TicketType(models.Model):
+class TicketType(CacheInvalidationMixin, models.Model):
     """Ticket type model for different ticket categories within an event"""
     
     event = models.ForeignKey(
@@ -253,7 +259,7 @@ class TicketType(models.Model):
         return True
 
 
-class Discount(models.Model):
+class Discount(CacheInvalidationMixin, models.Model):
     """Discount model for managing event discounts and promotions"""
     
     DISCOUNT_TYPES = [

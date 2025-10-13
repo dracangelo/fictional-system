@@ -7,8 +7,11 @@ from decimal import Decimal
 import secrets
 import string
 
+from movie_booking_app.managers import OptimizedBookingManager
+from movie_booking_app.cache_utils import CacheInvalidationMixin
 
-class Booking(models.Model):
+
+class Booking(CacheInvalidationMixin, models.Model):
     BOOKING_TYPES = [('event', 'Event Booking'), ('movie', 'Movie Booking')]
     PAYMENT_STATUS_CHOICES = [('pending', 'Pending'), ('processing', 'Processing'), ('completed', 'Completed'), ('failed', 'Failed'), ('refunded', 'Refunded'), ('partially_refunded', 'Partially Refunded')]
     BOOKING_STATUS_CHOICES = [('pending', 'Pending'), ('confirmed', 'Confirmed'), ('cancelled', 'Cancelled'), ('completed', 'Completed'), ('no_show', 'No Show')]
@@ -32,6 +35,9 @@ class Booking(models.Model):
     special_requests = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # Custom manager
+    objects = OptimizedBookingManager()
     
     class Meta:
         db_table = 'bookings'
@@ -87,7 +93,7 @@ class Booking(models.Model):
         return None
 
 
-class Ticket(models.Model):
+class Ticket(CacheInvalidationMixin, models.Model):
     TICKET_STATUS_CHOICES = [('valid', 'Valid'), ('used', 'Used'), ('cancelled', 'Cancelled'), ('expired', 'Expired')]
     
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='tickets')
@@ -159,7 +165,7 @@ class Ticket(models.Model):
         return "Unknown venue"
 
 
-class CustomerReview(models.Model):
+class CustomerReview(CacheInvalidationMixin, models.Model):
     RATING_CHOICES = [(1, '1 Star'), (2, '2 Stars'), (3, '3 Stars'), (4, '4 Stars'), (5, '5 Stars')]
     
     booking = models.OneToOneField(Booking, on_delete=models.CASCADE, related_name='review')
@@ -187,7 +193,7 @@ class CustomerReview(models.Model):
         return (timezone.now() - self.created_at).days <= 7
 
 
-class WaitlistEntry(models.Model):
+class WaitlistEntry(CacheInvalidationMixin, models.Model):
     STATUS_CHOICES = [('active', 'Active'), ('notified', 'Notified'), ('expired', 'Expired'), ('fulfilled', 'Fulfilled')]
     
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='waitlist_entries')

@@ -5,8 +5,11 @@ from django.utils import timezone
 from decimal import Decimal
 import uuid
 
+from movie_booking_app.managers import OptimizedTheaterManager, OptimizedMovieManager, OptimizedShowtimeManager
+from movie_booking_app.cache_utils import CacheInvalidationMixin
 
-class Theater(models.Model):
+
+class Theater(CacheInvalidationMixin, models.Model):
     """Theater model for managing movie theaters with seating configurations"""
     
     owner = models.ForeignKey(
@@ -52,6 +55,9 @@ class Theater(models.Model):
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # Custom manager
+    objects = OptimizedTheaterManager()
     
     class Meta:
         db_table = 'theaters'
@@ -131,7 +137,7 @@ class Theater(models.Model):
         return None
 
 
-class Movie(models.Model):
+class Movie(CacheInvalidationMixin, models.Model):
     """Movie model for managing movie information"""
     
     RATING_CHOICES = [
@@ -209,6 +215,9 @@ class Movie(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    # Custom manager
+    objects = OptimizedMovieManager()
+    
     class Meta:
         db_table = 'movies'
         verbose_name = 'Movie'
@@ -253,7 +262,7 @@ class Movie(models.Model):
             return f"{minutes}m"
 
 
-class Showtime(models.Model):
+class Showtime(CacheInvalidationMixin, models.Model):
     """Showtime model for managing movie showtimes at theaters"""
     
     theater = models.ForeignKey(
@@ -314,6 +323,9 @@ class Showtime(models.Model):
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # Custom manager
+    objects = OptimizedShowtimeManager()
     
     class Meta:
         db_table = 'showtimes'

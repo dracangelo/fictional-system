@@ -5,6 +5,18 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from .models import UserProfile
 
+# Import admin serializers
+from .admin_serializers import (
+    AdminUserListSerializer,
+    AuditLogSerializer,
+    ContentModerationSerializer,
+    SystemHealthMetricSerializer,
+    UserActionSerializer,
+    AdminDashboardSummarySerializer,
+    UserManagementActionSerializer,
+    ContentModerationActionSerializer
+)
+
 
 class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer for UserProfile model"""

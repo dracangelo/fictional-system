@@ -8,6 +8,12 @@ from django.utils import timezone
 from datetime import timedelta, datetime
 from decimal import Decimal
 
+from movie_booking_app.cached_views import (
+    CachedViewMixin, PerformanceMonitoringMixin, OptimizedQuerysetMixin,
+    cache_search_results, cache_analytics, cache_list_view, cache_detail_view
+)
+from movie_booking_app.cache_utils import monitor_query_performance
+
 from .models import Theater, Movie, Showtime
 from .serializers import (
     TheaterListSerializer, TheaterDetailSerializer, TheaterCreateUpdateSerializer,
@@ -17,7 +23,8 @@ from .serializers import (
 from users.permissions import IsTheaterOwner, IsOwnerOrReadOnly, CanManageOwnContent
 
 
-class TheaterViewSet(viewsets.ModelViewSet):
+class TheaterViewSet(CachedViewMixin, PerformanceMonitoringMixin,
+                     OptimizedQuerysetMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing theaters with seating layout management
     """
@@ -27,6 +34,11 @@ class TheaterViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'address', 'city', 'state']
     ordering_fields = ['name', 'city', 'screens', 'created_at']
     ordering = ['name']
+    
+    # Caching configuration
+    cache_timeout = 1800  # 30 minutes for theaters
+    cache_key_prefix = 'theaters'
+    cache_per_user = False
     
     def get_serializer_class(self):
         """Return appropriate serializer based on action"""
@@ -265,7 +277,8 @@ class TheaterViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class MovieViewSet(viewsets.ModelViewSet):
+class MovieViewSet(CachedViewMixin, PerformanceMonitoringMixin,
+                   OptimizedQuerysetMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing movies with CRUD operations
     """
@@ -276,6 +289,11 @@ class MovieViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'description', 'director', 'cast']
     ordering_fields = ['title', 'release_date', 'duration', 'created_at']
     ordering = ['-release_date']
+    
+    # Caching configuration
+    cache_timeout = 3600  # 1 hour for movies
+    cache_key_prefix = 'movies'
+    cache_per_user = False
     
     def get_permissions(self):
         """Set permissions based on action"""
@@ -345,7 +363,8 @@ class MovieViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class ShowtimeViewSet(viewsets.ModelViewSet):
+class ShowtimeViewSet(CachedViewMixin, PerformanceMonitoringMixin,
+                      OptimizedQuerysetMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing showtimes with conflict detection and validation
     """
@@ -355,6 +374,11 @@ class ShowtimeViewSet(viewsets.ModelViewSet):
     search_fields = ['movie__title', 'theater__name']
     ordering_fields = ['start_time', 'base_price', 'created_at']
     ordering = ['start_time']
+    
+    # Caching configuration
+    cache_timeout = 300  # 5 minutes for showtimes (frequently changing)
+    cache_key_prefix = 'showtimes'
+    cache_per_user = False
     
     def get_serializer_class(self):
         """Return appropriate serializer based on action"""

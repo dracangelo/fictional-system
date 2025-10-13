@@ -45,4 +45,7 @@ urlpatterns = [
     # Customer booking management endpoints
     path('history/summary/', views.booking_history_summary, name='booking_history_summary'),
     path('upcoming/', views.upcoming_bookings, name='upcoming_bookings'),
+    
+    # Analytics endpoints
+    path('analytics/', include('bookings.analytics_urls')),
 ]

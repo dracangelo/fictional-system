@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django_celery_results',
     
     # Local apps
+    'movie_booking_app.apps.MovieBookingAppConfig',
     'users',
     'events',
     'theaters',
@@ -66,6 +67,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Performance and caching middleware
+    'movie_booking_app.middleware.PerformanceMonitoringMiddleware',
+    'movie_booking_app.middleware.APIResponseCacheMiddleware',
+    'movie_booking_app.middleware.CacheInvalidationMiddleware',
+    'movie_booking_app.middleware.CompressionMiddleware',
+    # Custom middleware for admin functionality
+    'users.middleware.AuditLoggingMiddleware',
+    'users.middleware.ContentModerationMiddleware',
 ]
 
 ROOT_URLCONF = 'movie_booking_app.urls'
@@ -95,8 +104,44 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            'timeout': 20,
+            'check_same_thread': False,
+        },
+        'CONN_MAX_AGE': 600,  # Connection pooling for 10 minutes
     }
 }
+
+# Database Performance Settings
+DATABASE_ROUTERS = []
+
+# Query Monitoring (for development)
+if DEBUG:
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+            },
+            'file': {
+                'class': 'logging.FileHandler',
+                'filename': 'db_queries.log',
+            },
+        },
+        'loggers': {
+            'django.db.backends': {
+                'handlers': ['console', 'file'],
+                'level': 'DEBUG' if config('LOG_DB_QUERIES', default=False, cast=bool) else 'INFO',
+                'propagate': False,
+            },
+            'performance': {
+                'handlers': ['console', 'file'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+        },
+    }
 
 
 # Password validation
@@ -205,6 +250,65 @@ STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
 PAYMENT_PROCESSING_FEE_RATE = 0.03  # 3% processing fee
 PAYMENT_RETRY_ATTEMPTS = 3
 PAYMENT_RETRY_DELAY = 1  # seconds
+
+# Redis Configuration
+REDIS_URL = config('REDIS_URL', default='redis://localhost:6379')
+
+# Cache Configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f'{REDIS_URL}/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'PARSER_CLASS': 'redis.connection.HiredisParser',
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 50,
+                'retry_on_timeout': True,
+            },
+            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+            'IGNORE_EXCEPTIONS': True,
+        },
+        'KEY_PREFIX': 'movie_booking',
+        'VERSION': 1,
+        'TIMEOUT': 300,  # 5 minutes default timeout
+    },
+    'sessions': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f'{REDIS_URL}/2',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'KEY_PREFIX': 'movie_booking_sessions',
+        'TIMEOUT': 86400,  # 24 hours for sessions
+    },
+    'api_cache': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f'{REDIS_URL}/3',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'KEY_PREFIX': 'movie_booking_api',
+        'TIMEOUT': 600,  # 10 minutes for API responses
+    }
+}
+
+# Session Configuration
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'sessions'
+
+# Cache Settings
+CACHE_TIMEOUT = {
+    'events_list': 300,      # 5 minutes
+    'event_detail': 600,     # 10 minutes
+    'theaters_list': 1800,   # 30 minutes
+    'theater_detail': 3600,  # 1 hour
+    'movies_list': 3600,     # 1 hour
+    'movie_detail': 7200,    # 2 hours
+    'showtimes': 300,        # 5 minutes
+    'analytics': 900,        # 15 minutes
+    'search_results': 600,   # 10 minutes
+}
 
 # Celery Configuration
 CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')

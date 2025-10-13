@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
 
@@ -21,4 +21,7 @@ urlpatterns = [
     # User management endpoints
     path('list/', views.UserListView.as_view(), name='user_list'),
     path('permissions/', views.user_permissions, name='user_permissions'),
+    
+    # Admin endpoints
+    path('admin/', include('users.admin_urls')),
 ]

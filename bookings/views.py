@@ -10,6 +10,12 @@ from django_filters import rest_framework as filters
 from decimal import Decimal
 from datetime import datetime, timedelta
 
+from movie_booking_app.cached_views import (
+    CachedViewMixin, PerformanceMonitoringMixin, OptimizedQuerysetMixin,
+    cache_analytics
+)
+from movie_booking_app.cache_utils import monitor_query_performance
+
 from .models import Booking, Ticket, CustomerReview, WaitlistEntry
 from .serializers import (
     BookingListSerializer, BookingDetailSerializer, BookingCancellationSerializer,
@@ -50,7 +56,8 @@ class BookingPagination(PageNumberPagination):
     max_page_size = 50
 
 
-class CustomerBookingViewSet(viewsets.ReadOnlyModelViewSet):
+class CustomerBookingViewSet(CachedViewMixin, PerformanceMonitoringMixin,
+                             OptimizedQuerysetMixin, viewsets.ReadOnlyModelViewSet):
     """ViewSet for customer booking management"""
     
     serializer_class = BookingListSerializer
@@ -58,6 +65,11 @@ class CustomerBookingViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = BookingFilter
     pagination_class = BookingPagination
+    
+    # Caching configuration
+    cache_timeout = 300  # 5 minutes for customer bookings
+    cache_key_prefix = 'customer_bookings'
+    cache_per_user = True  # Cache per user since it's user-specific data
     
     def get_queryset(self):
         """Get bookings for the current user"""
@@ -119,6 +131,8 @@ class CustomerBookingViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
+    @cache_analytics(timeout=900)
+    @monitor_query_performance
     def analytics(self, request):
         """Get customer booking analytics"""
         user = request.user
