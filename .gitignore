@@ -1,0 +1,146 @@
+# This is a general-purpose .gitignore file.
+# It includes common patterns for operating systems, IDEs, dependency managers,
+# build outputs, log files, and sensitive information.
+# Customize it for your specific project needs.
+
+# =========================================================================
+## Operating System and Editor Files
+# =========================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Linux / Various Editors
+*~
+*.swp
+*.swo
+*.swn
+
+# =========================================================================
+## IDEs and Configuration
+# =========================================================================
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# JetBrains (IntelliJ, PyCharm, WebStorm, etc.)
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# =========================================================================
+## Dependencies & Packages
+# =========================================================================
+node_modules/
+jspm_packages/
+bower_components/
+vendor/ # For PHP Composer, Go, etc.
+
+# =========================================================================
+## Build Artifacts, Logs, and Temporary Files
+# =========================================================================
+build/
+dist/
+out/
+target/ # For Java/Maven/Gradle
+bin/
+obj/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# =========================================================================
+## Secrets and Environment Variables (IMPORTANT!)
+# =========================================================================
+# Never commit sensitive information.
+.env
+.env.local
+.env.*.local
+!.env.example
+*.pem
+*.key
+credentials.json
+secrets.yml
+
+# =========================================================================
+## Language & Framework Specific
+# =========================================================================
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+venv/
+env/
+.venv/
+.env/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Node.js
+.npm/
+.pnpm-store/
+
+# Sass
+.sass-cache/
+.node-sass/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+crash.log
+
+# =========================================================================
+## Miscellaneous
+# =========================================================================
+
+# Coverage reports
+coverage/
+.nyc_output/
+*.lcov
+
+# Uploaded files or user-generated content
+uploads/
+
+# kiro files
+.kiro
