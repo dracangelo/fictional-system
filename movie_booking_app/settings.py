@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django_filters',
     'django_celery_beat',
     'django_celery_results',
+    'drf_spectacular',
     
     # Local apps
     'movie_booking_app.apps.MovieBookingAppConfig',
@@ -61,6 +62,13 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    # Error handling middleware (should be early in the stack)
+    'movie_booking_app.error_middleware.HealthCheckMiddleware',
+    'movie_booking_app.error_middleware.ErrorHandlingMiddleware',
+    'movie_booking_app.error_middleware.SecurityLoggingMiddleware',
+    # Security middleware
+    'movie_booking_app.security.RateLimitMiddleware',
+    'movie_booking_app.security.SecurityHeadersMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -115,33 +123,10 @@ DATABASES = {
 # Database Performance Settings
 DATABASE_ROUTERS = []
 
-# Query Monitoring (for development)
-if DEBUG:
-    LOGGING = {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-            },
-            'file': {
-                'class': 'logging.FileHandler',
-                'filename': 'db_queries.log',
-            },
-        },
-        'loggers': {
-            'django.db.backends': {
-                'handlers': ['console', 'file'],
-                'level': 'DEBUG' if config('LOG_DB_QUERIES', default=False, cast=bool) else 'INFO',
-                'propagate': False,
-            },
-            'performance': {
-                'handlers': ['console', 'file'],
-                'level': 'INFO',
-                'propagate': False,
-            },
-        },
-    }
+# Comprehensive Logging Configuration
+from movie_booking_app.logging_config import get_logging_config
+
+LOGGING = get_logging_config(BASE_DIR, DEBUG)
 
 
 # Password validation
@@ -179,6 +164,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -199,6 +185,18 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_THROTTLE_CLASSES': [
+        'movie_booking_app.security.CustomUserRateThrottle',
+        'movie_booking_app.security.CustomAnonRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '100/min',
+        'anon': '20/min',
+        'login': '5/min',
+        'booking': '20/min',
+    },
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'EXCEPTION_HANDLER': 'movie_booking_app.exceptions.custom_exception_handler',
 }
 
 # JWT Configuration
@@ -232,6 +230,27 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = False  # Explicitly set to False for security
+
+# Additional CORS security settings
+CORS_ALLOWED_ORIGIN_REGEXES = []
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+CORS_EXPOSE_HEADERS = [
+    'content-type',
+    'x-ratelimit-remaining',
+    'x-ratelimit-limit',
+]
 
 # User Roles
 USER_ROLES = [
@@ -257,38 +276,18 @@ REDIS_URL = config('REDIS_URL', default='redis://localhost:6379')
 # Cache Configuration
 CACHES = {
     'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': f'{REDIS_URL}/1',
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'PARSER_CLASS': 'redis.connection.HiredisParser',
-            'CONNECTION_POOL_KWARGS': {
-                'max_connections': 50,
-                'retry_on_timeout': True,
-            },
-            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
-            'IGNORE_EXCEPTIONS': True,
-        },
-        'KEY_PREFIX': 'movie_booking',
-        'VERSION': 1,
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'default-cache',
         'TIMEOUT': 300,  # 5 minutes default timeout
     },
     'sessions': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': f'{REDIS_URL}/2',
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        },
-        'KEY_PREFIX': 'movie_booking_sessions',
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'sessions-cache',
         'TIMEOUT': 86400,  # 24 hours for sessions
     },
     'api_cache': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': f'{REDIS_URL}/3',
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        },
-        'KEY_PREFIX': 'movie_booking_api',
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'api-cache',
         'TIMEOUT': 600,  # 10 minutes for API responses
     }
 }
@@ -356,4 +355,163 @@ NOTIFICATION_SETTINGS = {
         'email': True,
         'sms': False,
     },
+}
+
+# Security Settings
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+
+# Session Security
+SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 3600  # 1 hour
+
+# CSRF Security
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_USE_SESSIONS = True
+
+# File Upload Security
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+FILE_UPLOAD_PERMISSIONS = 0o644
+
+# Allowed file types for uploads
+ALLOWED_FILE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.mp4', '.mov', '.avi']
+ALLOWED_MIME_TYPES = [
+    'image/jpeg', 'image/png', 'image/gif',
+    'application/pdf',
+    'video/mp4', 'video/quicktime', 'video/x-msvideo'
+]
+
+# Security Logging
+SECURITY_LOG_LEVEL = 'WARNING'
+SECURITY_LOG_FILE = 'security.log'
+
+# Rate Limiting Settings
+RATE_LIMIT_ENABLE = True
+RATE_LIMIT_CACHE = 'default'
+
+# Input Validation Settings
+MAX_STRING_LENGTH = 1000
+MAX_JSON_FIELD_SIZE = 10000
+ENABLE_HTML_SANITIZATION = True
+
+# DRF Spectacular Configuration for API Documentation
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Movie & Event Booking API',
+    'DESCRIPTION': '''
+    A comprehensive platform for booking movies and events with multi-tenant support.
+    
+    ## Features
+    - **Multi-role Authentication**: Admin, Event Owner, Theater Owner, Customer roles
+    - **Event Management**: Create and manage events with ticketing and discounts
+    - **Theater Management**: Manage theaters, movies, and showtimes
+    - **Booking System**: Real-time seat selection and booking with payment processing
+    - **Notifications**: Email and SMS notifications for bookings and updates
+    - **Analytics**: Comprehensive reporting and analytics for business insights
+    
+    ## Authentication
+    This API uses JWT (JSON Web Token) authentication. Include the token in the Authorization header:
+    ```
+    Authorization: Bearer <your-jwt-token>
+    ```
+    
+    ## Rate Limiting
+    - Authenticated users: 100 requests/minute
+    - Anonymous users: 20 requests/minute
+    - Login attempts: 5 requests/minute
+    - Booking operations: 20 requests/minute
+    
+    ## Versioning
+    Current API version: v1
+    Future versions will be available at `/api/v2/`, `/api/v3/`, etc.
+    ''',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayOperationId': True,
+        'filter': True,
+        'tryItOutEnabled': True,
+        'supportedSubmitMethods': ['get', 'post', 'put', 'patch', 'delete'],
+    },
+    'REDOC_UI_SETTINGS': {
+        'hideDownloadButton': False,
+        'expandResponses': 'all',
+        'pathInMiddlePanel': True,
+        'theme': {
+            'colors': {
+                'primary': {
+                    'main': '#1976d2'
+                }
+            }
+        }
+    },
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SORT_OPERATIONS': False,
+    'ENUM_NAME_OVERRIDES': {
+        'ValidationErrorEnum': 'drf_spectacular.plumbing.ValidationErrorEnum.choices',
+    },
+
+    'PREPROCESSING_HOOKS': [
+        'movie_booking_app.api_docs.preprocessing_hooks.custom_preprocessing_hook'
+    ],
+    'POSTPROCESSING_HOOKS': [
+        'movie_booking_app.api_docs.preprocessing_hooks.custom_postprocessing_hook'
+    ],
+    'SCHEMA_PATH_PREFIX': '/api/',
+    'SCHEMA_PATH_PREFIX_TRIM': True,
+    'SERVERS': [
+        {
+            'url': 'http://localhost:8000',
+            'description': 'Development server'
+        },
+        {
+            'url': 'https://api.moviebooking.com',
+            'description': 'Production server'
+        }
+    ],
+    'TAGS': [
+        {
+            'name': 'Authentication',
+            'description': 'User authentication and authorization endpoints'
+        },
+        {
+            'name': 'Events',
+            'description': 'Event management and discovery endpoints'
+        },
+        {
+            'name': 'Theaters',
+            'description': 'Theater and movie management endpoints'
+        },
+        {
+            'name': 'Bookings',
+            'description': 'Booking creation and management endpoints'
+        },
+        {
+            'name': 'Notifications',
+            'description': 'Notification preferences and management endpoints'
+        },
+        {
+            'name': 'Analytics',
+            'description': 'Analytics and reporting endpoints'
+        },
+        {
+            'name': 'Admin',
+            'description': 'Administrative endpoints for system management'
+        }
+    ],
+    'EXTERNAL_DOCS': {
+        'description': 'API Integration Guide',
+        'url': 'https://docs.moviebooking.com/integration/'
+    }
 }

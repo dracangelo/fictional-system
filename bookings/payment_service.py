@@ -18,24 +18,10 @@ logger = logging.getLogger(__name__)
 stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', '')
 
 
-class PaymentError(Exception):
-    """Base exception for payment processing errors"""
-    pass
-
-
-class PaymentProcessingError(PaymentError):
-    """Raised when payment processing fails"""
-    pass
-
-
-class RefundError(PaymentError):
-    """Raised when refund processing fails"""
-    pass
-
-
-class WebhookError(PaymentError):
-    """Raised when webhook processing fails"""
-    pass
+# Import centralized exceptions
+from movie_booking_app.exceptions import (
+    PaymentError, PaymentProcessingError, RefundError, WebhookError
+)
 
 
 class PaymentService:

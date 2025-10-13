@@ -1,6 +1,7 @@
 from rest_framework import viewsets, status, permissions, filters, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q, Sum, Count, Avg, F
 from django.db.models.functions import TruncDate
@@ -14,6 +15,10 @@ from movie_booking_app.cached_views import (
     cache_search_results, cache_analytics, cache_list_view, cache_detail_view
 )
 from movie_booking_app.cache_utils import monitor_query_performance
+from movie_booking_app.security import (
+    CustomUserRateThrottle, CustomAnonRateThrottle, SecurityLogger, InputSanitizationMixin
+)
+from movie_booking_app.file_handlers import MediaUploadHandler, handle_file_upload
 
 from .models import Event, TicketType, Discount
 from .serializers import (
@@ -27,7 +32,7 @@ from users.permissions import IsEventOwner, IsOwnerOrReadOnly, CanManageOwnConte
 
 
 class EventViewSet(CachedViewMixin, PerformanceMonitoringMixin, 
-                   OptimizedQuerysetMixin, viewsets.ModelViewSet):
+                   OptimizedQuerysetMixin, InputSanitizationMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing events with CRUD operations and owner-based filtering
     """
@@ -37,6 +42,10 @@ class EventViewSet(CachedViewMixin, PerformanceMonitoringMixin,
     search_fields = ['title', 'description', 'venue', 'address']
     ordering_fields = ['start_datetime', 'created_at', 'title']
     ordering = ['-start_datetime']
+    
+    # Security configuration
+    throttle_classes = [CustomUserRateThrottle, CustomAnonRateThrottle]
+    throttle_scope = 'events'
     
     # Caching configuration
     cache_timeout = 300  # 5 minutes for list views
@@ -348,6 +357,145 @@ class EventViewSet(CachedViewMixin, PerformanceMonitoringMixin,
         analytics_data = DiscountService.get_discount_analytics(event)
         serializer = DiscountAnalyticsSerializer(analytics_data)
         return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def upload_media(self, request, pk=None):
+        """Secure media upload for events"""
+        event = self.get_object()
+        
+        # Check if user owns the event
+        if event.owner != request.user:
+            SecurityLogger.log_security_event(
+                'UNAUTHORIZED_ACCESS',
+                f'User {request.user.username} attempted to upload media for event {event.id}',
+                user=request.user,
+                ip_address=self.get_client_ip(request),
+                severity='medium'
+            )
+            return Response(
+                {'error': 'You do not have permission to upload media for this event'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        if 'files' not in request.FILES:
+            return Response(
+                {'error': 'No files provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Use secure media upload handler
+            media_handler = MediaUploadHandler()
+            uploaded_files = media_handler.upload_event_media(
+                request.FILES.getlist('files'),
+                event.id
+            )
+            
+            # Update event media field
+            current_media = event.media or []
+            current_media.extend(uploaded_files)
+            event.media = current_media
+            event.save()
+            
+            # Log successful upload
+            SecurityLogger.log_security_event(
+                'MEDIA_UPLOAD',
+                f'User {request.user.username} uploaded {len(uploaded_files)} files for event {event.id}',
+                user=request.user,
+                ip_address=self.get_client_ip(request),
+                severity='low'
+            )
+            
+            return Response({
+                'message': f'Successfully uploaded {len(uploaded_files)} files',
+                'uploaded_files': uploaded_files
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            SecurityLogger.log_security_event(
+                'MEDIA_UPLOAD_FAILED',
+                f'Media upload failed for user {request.user.username}, event {event.id}: {str(e)}',
+                user=request.user,
+                ip_address=self.get_client_ip(request),
+                severity='medium'
+            )
+            return Response(
+                {'error': 'File upload failed'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    def get_client_ip(self, request):
+        """Get client IP address"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0].strip()
+        else:
+            ip = request.META.get('REMOTE_ADDR', '')
+        return ip
+    
+    def perform_create(self, serializer):
+        """Override create to add security logging"""
+        try:
+            event = serializer.save(owner=self.request.user)
+            SecurityLogger.log_security_event(
+                'EVENT_CREATED',
+                f'User {self.request.user.username} created event {event.id}',
+                user=self.request.user,
+                ip_address=self.get_client_ip(self.request),
+                severity='low'
+            )
+        except Exception as e:
+            SecurityLogger.log_security_event(
+                'EVENT_CREATE_FAILED',
+                f'Event creation failed for user {self.request.user.username}: {str(e)}',
+                user=self.request.user,
+                ip_address=self.get_client_ip(self.request),
+                severity='medium'
+            )
+            raise
+    
+    def perform_update(self, serializer):
+        """Override update to add security logging"""
+        try:
+            event = serializer.save()
+            SecurityLogger.log_security_event(
+                'EVENT_UPDATED',
+                f'User {self.request.user.username} updated event {event.id}',
+                user=self.request.user,
+                ip_address=self.get_client_ip(self.request),
+                severity='low'
+            )
+        except Exception as e:
+            SecurityLogger.log_security_event(
+                'EVENT_UPDATE_FAILED',
+                f'Event update failed for user {self.request.user.username}: {str(e)}',
+                user=self.request.user,
+                ip_address=self.get_client_ip(self.request),
+                severity='medium'
+            )
+            raise
+    
+    def perform_destroy(self, instance):
+        """Override destroy to add security logging"""
+        try:
+            event_id = instance.id
+            instance.delete()
+            SecurityLogger.log_security_event(
+                'EVENT_DELETED',
+                f'User {self.request.user.username} deleted event {event_id}',
+                user=self.request.user,
+                ip_address=self.get_client_ip(self.request),
+                severity='medium'
+            )
+        except Exception as e:
+            SecurityLogger.log_security_event(
+                'EVENT_DELETE_FAILED',
+                f'Event deletion failed for user {self.request.user.username}: {str(e)}',
+                user=self.request.user,
+                ip_address=self.get_client_ip(self.request),
+                severity='high'
+            )
+            raise
 
 
 class TicketTypeViewSet(viewsets.ModelViewSet):

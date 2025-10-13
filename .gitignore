@@ -109,7 +109,36 @@ venv/
 env/
 .venv/
 .env/
-.env.example
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+static/
+.static/
+celerybeat-schedule
+celerybeat.pid
+
+# Django migrations (optional - uncomment if you want to ignore migrations)
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# Django secret key and settings
+secret_key.txt
+settings_local.py
+settings_production.py
 
 # Java
 *.class
@@ -142,6 +171,44 @@ coverage/
 
 # Uploaded files or user-generated content
 uploads/
+media/
+user_uploads/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+db_queries.log
+
+# Security and audit files
+security_audit_report.json
+audit_logs/
+
+# Movie/Event booking specific
+ticket_pdfs/
+receipts/
+booking_exports/
+analytics_reports/
+
+# Payment integration files (sensitive)
+payment_logs/
+transaction_logs/
+stripe_webhooks.log
+paypal_logs/
+
+# Email templates cache
+email_cache/
+
+# Backup files
+*.bak
+*.backup
+backup/
+dumps/
+
+# Performance monitoring
+profiling/
+*.prof
 
 # kiro files
 .kiro
+.github

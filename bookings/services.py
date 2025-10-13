@@ -17,19 +17,10 @@ from notifications.tasks import send_booking_confirmation_task, send_notificatio
 logger = logging.getLogger(__name__)
 
 
-class BookingEngineError(Exception):
-    """Base exception for booking engine errors"""
-    pass
-
-
-class SeatUnavailableError(BookingEngineError):
-    """Raised when requested seats are not available"""
-    pass
-
-
-class TicketUnavailableError(BookingEngineError):
-    """Raised when requested tickets are not available"""
-    pass
+# Import centralized exceptions
+from movie_booking_app.exceptions import (
+    BookingError, SeatUnavailableError, TicketUnavailableError
+)
 
 
 class BookingService:
