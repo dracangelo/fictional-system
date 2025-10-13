@@ -12,6 +12,7 @@ from events.models import Event, TicketType
 from events.services import DiscountService, BookingPriceCalculator
 from theaters.models import Showtime
 from .payment_service import PaymentService, PaymentProcessingError
+from notifications.tasks import send_booking_confirmation_task, send_notification_task
 
 logger = logging.getLogger(__name__)
 
@@ -155,6 +156,33 @@ class BookingService:
             ticket_type.save()
         
         logger.info(f"Successfully created event booking {booking.booking_reference}")
+        
+        # Send booking confirmation notification (async)
+        context_data = {
+            'user_name': customer.get_full_name() or customer.username,
+            'booking_reference': booking.booking_reference,
+            'event_title': event.title,
+            'event_venue': event.venue,
+            'event_datetime': event.start_datetime,
+            'total_amount': str(booking.total_amount),
+            'ticket_count': booking.tickets.count(),
+            'tickets': [
+                {
+                    'ticket_number': ticket.ticket_number,
+                    'ticket_type': ticket.ticket_type.name if ticket.ticket_type else 'General',
+                    'price': str(ticket.price)
+                }
+                for ticket in booking.tickets.all()
+            ]
+        }
+        
+        # Queue notification task
+        send_booking_confirmation_task.delay(
+            user_id=customer.id,
+            booking_id=booking.id,
+            context_data=context_data
+        )
+        
         return booking
 
     @staticmethod
@@ -276,6 +304,33 @@ class BookingService:
         showtime.save()
         
         logger.info(f"Successfully created movie booking {booking.booking_reference}")
+        
+        # Send booking confirmation notification (async)
+        context_data = {
+            'user_name': customer.get_full_name() or customer.username,
+            'booking_reference': booking.booking_reference,
+            'movie_title': showtime.movie.title,
+            'theater_name': showtime.theater.name,
+            'showtime_datetime': showtime.start_time,
+            'total_amount': str(booking.total_amount),
+            'ticket_count': len(seat_numbers),
+            'tickets': [
+                {
+                    'ticket_number': ticket.ticket_number,
+                    'seat_number': ticket.seat_number,
+                    'price': str(ticket.price)
+                }
+                for ticket in booking.tickets.all()
+            ]
+        }
+        
+        # Queue notification task
+        send_booking_confirmation_task.delay(
+            user_id=customer.id,
+            booking_id=booking.id,
+            context_data=context_data
+        )
+        
         return booking
 
     @staticmethod
@@ -345,6 +400,34 @@ class BookingService:
         
         # Mark all tickets as cancelled
         booking.tickets.update(status='cancelled')
+        
+        # Send cancellation notification
+        context_data = {
+            'user_name': booking.customer.get_full_name() or booking.customer.username,
+            'booking_reference': booking.booking_reference,
+            'refund_amount': str(booking.total_amount),
+            'cancellation_reason': reason
+        }
+        
+        if booking.booking_type == 'event' and booking.event:
+            context_data.update({
+                'event_title': booking.event.title,
+                'event_datetime': booking.event.start_datetime,
+            })
+        elif booking.booking_type == 'movie' and booking.showtime:
+            context_data.update({
+                'movie_title': booking.showtime.movie.title,
+                'showtime_datetime': booking.showtime.start_time,
+            })
+        
+        # Queue cancellation notification
+        send_notification_task.delay(
+            user_id=booking.customer.id,
+            notification_type='booking_cancellation',
+            context_data=context_data,
+            related_object_id=booking.id,
+            related_object_type='booking'
+        )
         
         return True
     

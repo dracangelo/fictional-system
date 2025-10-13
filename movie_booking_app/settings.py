@@ -46,12 +46,15 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'django_filters',
+    'django_celery_beat',
+    'django_celery_results',
     
     # Local apps
     'users',
     'events',
     'theaters',
     'bookings',
+    'notifications',
 ]
 
 MIDDLEWARE = [
@@ -202,3 +205,51 @@ STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
 PAYMENT_PROCESSING_FEE_RATE = 0.03  # 3% processing fee
 PAYMENT_RETRY_ATTEMPTS = 3
 PAYMENT_RETRY_DELAY = 1  # seconds
+
+# Celery Configuration
+CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# Email Configuration
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@moviebooking.com')
+
+# SMS Configuration (Twilio)
+TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='')
+TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='')
+TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER', default='')
+
+# Notification Settings
+NOTIFICATION_SETTINGS = {
+    'BOOKING_CONFIRMATION': {
+        'email': True,
+        'sms': True,
+    },
+    'BOOKING_REMINDER': {
+        'email': True,
+        'sms': True,
+        'hours_before': [24, 2],  # Send reminders 24 hours and 2 hours before
+    },
+    'BOOKING_CANCELLATION': {
+        'email': True,
+        'sms': False,
+    },
+    'EVENT_UPDATE': {
+        'email': True,
+        'sms': False,
+    },
+    'SYSTEM_MAINTENANCE': {
+        'email': True,
+        'sms': False,
+    },
+}

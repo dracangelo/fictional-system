@@ -237,7 +237,25 @@ class PaymentService:
             
             logger.info(f"Successfully processed payment for booking {booking.booking_reference}")
             
-            # TODO: Send confirmation email/SMS (will be handled by notification system)
+            # Send payment success notification
+            from notifications.tasks import send_notification_task
+            
+            context_data = {
+                'user_name': booking.customer.get_full_name() or booking.customer.username,
+                'booking_reference': booking.booking_reference,
+                'payment_amount': str(booking.total_amount),
+                'payment_method': booking.payment_method or 'card',
+                'transaction_id': payment_intent_id
+            }
+            
+            # Queue payment success notification
+            send_notification_task.delay(
+                user_id=booking.customer.id,
+                notification_type='payment_success',
+                context_data=context_data,
+                related_object_id=booking.id,
+                related_object_type='booking'
+            )
             
             return True
             
@@ -280,6 +298,25 @@ class PaymentService:
             BookingService.cancel_booking(booking, f"Payment failed: {failure_reason}")
             
             logger.info(f"Processed failed payment for booking {booking.booking_reference}")
+            
+            # Send payment failure notification
+            from notifications.tasks import send_notification_task
+            
+            context_data = {
+                'user_name': booking.customer.get_full_name() or booking.customer.username,
+                'booking_reference': booking.booking_reference,
+                'payment_amount': str(booking.total_amount),
+                'error_message': failure_reason or 'Payment processing failed'
+            }
+            
+            # Queue payment failure notification
+            send_notification_task.delay(
+                user_id=booking.customer.id,
+                notification_type='payment_failed',
+                context_data=context_data,
+                related_object_id=booking.id,
+                related_object_type='booking'
+            )
             
             return True
             
