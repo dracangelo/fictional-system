@@ -1,3 +1,5 @@
-// Authentication pages will be exported here
-// Example: export { LoginPage } from './LoginPage';
-// Example: export { RegisterPage } from './RegisterPage';
+export { LoginPage } from './LoginPage';
+export { RegisterPage } from './RegisterPage';
+export { ForgotPasswordPage } from './ForgotPasswordPage';
+export { ResetPasswordPage } from './ResetPasswordPage';
+export { UnauthorizedPage } from './UnauthorizedPage';

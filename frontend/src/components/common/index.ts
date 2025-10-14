@@ -1,4 +1,4 @@
-// Common/shared components will be exported here
-// Example: export { LoadingSpinner } from './LoadingSpinner';
-// Example: export { ErrorBoundary } from './ErrorBoundary';
-// Example: export { Modal } from './Modal';
+export { ProtectedRoute, PublicRoute } from './ProtectedRoute';
+export { Pagination } from './Pagination';
+export { LoadingSpinner } from './LoadingSpinner';
+export { EmptyState } from './EmptyState';

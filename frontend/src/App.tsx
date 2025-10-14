@@ -1,12 +1,17 @@
-import { ComponentShowcase } from './components/demo/ComponentShowcase'
-import './App.css'
+import { RouterProvider } from 'react-router-dom';
+import { AuthProvider } from './contexts';
+import { QueryProvider } from './providers/QueryProvider';
+import { router } from './router';
+import './App.css';
 
 function App() {
   return (
-    <div className="min-h-screen bg-secondary-50 py-8">
-      <ComponentShowcase />
-    </div>
-  )
+    <QueryProvider>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </QueryProvider>
+  );
 }
 
-export default App
+export default App;

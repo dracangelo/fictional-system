@@ -1,3 +1,2 @@
-// Booking services will be exported here
-// Example: export { bookingService } from './bookingService';
-// Example: export * from './types';
+export { bookingService } from './bookingService';
+export type * from '../../types/booking';

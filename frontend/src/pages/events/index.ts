@@ -1,3 +1,3 @@
-// Event pages will be exported here
-// Example: export { EventListPage } from './EventListPage';
-// Example: export { EventDetailPage } from './EventDetailPage';
+// Event pages
+export { default as EventListingPage } from './EventListingPage';
+export { default as SearchResultsPage } from './SearchResultsPage';

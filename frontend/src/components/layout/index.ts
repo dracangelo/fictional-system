@@ -1,3 +1,3 @@
-export { Grid, GridItem, gridVariants, type GridProps } from './Grid'
-export { Container, containerVariants, type ContainerProps } from './Container'
-export { Stack, stackVariants, type StackProps } from './Stack'
+export { MainLayout } from './MainLayout';
+export { Header } from './Header';
+export { Footer } from './Footer';
