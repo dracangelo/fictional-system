@@ -2,6 +2,7 @@
 export * from './api';
 export * from './auth';
 export * from './event';
+export * from './theater';
 export * from './booking';
 export * from './user';
 export * from './payment';

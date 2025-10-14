@@ -8,6 +8,12 @@ export { CheckoutProgress } from './CheckoutProgress';
 export { BookingSummaryStep } from './BookingSummaryStep';
 export { PaymentStep } from './PaymentStep';
 export { ConfirmationStep } from './ConfirmationStep';
+export { BookingHistory } from './BookingHistory';
+export { BookingDetailsModal } from './BookingDetailsModal';
+export { CancelBookingModal } from './CancelBookingModal';
+export { UpcomingBookings } from './UpcomingBookings';
+export { WishlistCard } from './WishlistCard';
+export { RecommendedEvents } from './RecommendedEvents';
 
 export type { SeatButtonProps } from './SeatButton';
 export type { SeatLegendProps } from './SeatLegend';

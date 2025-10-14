@@ -13,5 +13,8 @@ export * from './common';
 // Event Components
 export * from './events';
 
+// Theater Components
+export * from './theaters';
+
 // Booking Components
 export * from './booking';

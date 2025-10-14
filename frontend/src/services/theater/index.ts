@@ -1,0 +1,1 @@
+export { TheaterService } from './theaterService'
