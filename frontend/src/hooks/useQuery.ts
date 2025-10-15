@@ -1,7 +1,25 @@
-import { useQuery, useMutation, useQueryClient, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // Re-export the base hooks for convenience
 export { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+// Define types locally to avoid import issues
+type UseQueryOptions<TData = unknown, TError = Error> = {
+  enabled?: boolean;
+  staleTime?: number;
+  cacheTime?: number;
+  refetchOnWindowFocus?: boolean;
+  refetchInterval?: number;
+  retry?: boolean | number;
+  [key: string]: any;
+};
+
+type UseMutationOptions<TData = unknown, TError = Error, TVariables = void> = {
+  onSuccess?: (data: TData, variables: TVariables) => void;
+  onError?: (error: TError, variables: TVariables) => void;
+  onMutate?: (variables: TVariables) => void;
+  [key: string]: any;
+};
 import { eventService } from '../services/event/eventService';
 import { bookingService } from '../services/booking/bookingService';
 import { userService } from '../services/user/userService';

@@ -13,8 +13,11 @@ import { bookingService } from '../../services/booking';
 import type { CreateBookingData, Booking, PaymentIntent } from '../../types/booking';
 import type { BookingSummaryData } from '../../types/seat';
 
-// Initialize Stripe
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
+// Initialize Stripe with error handling
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripePublishableKey && stripePublishableKey.startsWith('pk_') 
+  ? loadStripe(stripePublishableKey)
+  : Promise.resolve(null);
 
 export interface PaymentStepProps {
   paymentIntent: PaymentIntent;
@@ -25,6 +28,47 @@ export interface PaymentStepProps {
 }
 
 const PaymentStep: React.FC<PaymentStepProps> = (props) => {
+  const [stripeError, setStripeError] = useState<string | null>(null);
+
+  useEffect(() => {
+    stripePromise.then((stripe) => {
+      if (!stripe) {
+        setStripeError('Stripe is not properly configured. Please contact support.');
+      }
+    }).catch((error) => {
+      console.error('Stripe initialization error:', error);
+      setStripeError('Failed to initialize payment system. Please try again later.');
+    });
+  }, []);
+
+  if (stripeError) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-md p-6">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-red-800">Payment System Error</h3>
+            <div className="mt-2 text-sm text-red-700">
+              <p>{stripeError}</p>
+            </div>
+            <div className="mt-4">
+              <button
+                onClick={props.onBack}
+                className="bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded-md text-sm font-medium"
+              >
+                Go Back
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Elements stripe={stripePromise}>
       <PaymentForm {...props} />
@@ -69,7 +113,7 @@ const PaymentForm: React.FC<PaymentStepProps> = ({
     event.preventDefault();
 
     if (!stripe || !elements) {
-      setError('Stripe has not loaded yet. Please try again.');
+      setError('Payment system is not available. Please check your internet connection and try again.');
       return;
     }
 

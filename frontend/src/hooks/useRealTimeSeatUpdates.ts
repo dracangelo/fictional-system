@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { getSocketService } from '../services/notification/socketService';
-import { SeatUpdateEvent } from '../types/notification';
+import type { SeatUpdateEvent } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 
 interface UseRealTimeSeatUpdatesOptions {

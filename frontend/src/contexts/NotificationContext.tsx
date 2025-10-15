@@ -118,7 +118,7 @@ interface NotificationProviderProps {
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ 
   children, 
-  socketUrl = process.env.VITE_WEBSOCKET_URL || 'ws://localhost:8000' 
+  socketUrl = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000' 
 }) => {
   const [state, dispatch] = useReducer(notificationReducer, initialState);
   const { user, token } = useAuth();

@@ -479,6 +479,88 @@ def get_featured_content(request):
 
 
 @api_view(['GET'])
+@permission_classes([permissions.IsAuthenticatedOrReadOnly])
+def get_search_history(request):
+    """
+    Get user's search history
+    
+    Query Parameters:
+    - limit: Number of results (default: 20, max: 100)
+    """
+    try:
+        limit = int(request.GET.get('limit', 20))
+        limit = min(limit, 100)  # Cap at 100
+        
+        # For now, return mock data since we don't have a search history model
+        # In a real implementation, you'd query a SearchHistory model
+        if request.user.is_authenticated:
+            mock_history = [
+                {
+                    'id': i,
+                    'query': f'Search term {i}',
+                    'timestamp': '2024-01-01T12:00:00Z',
+                    'results_count': 10 - i,
+                    'search_type': 'events' if i % 2 == 0 else 'movies'
+                }
+                for i in range(1, min(limit + 1, 21))
+            ]
+        else:
+            # Return empty history for unauthenticated users
+            mock_history = []
+        
+        return Response({
+            'results': mock_history,
+            'count': len(mock_history)
+        })
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to get search history: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+@cache_page(60 * 15)  # Cache for 15 minutes
+def get_search_analytics(request):
+    """
+    Get search analytics and popular searches
+    """
+    try:
+        # Mock analytics data - in a real implementation, you'd query actual data
+        analytics_data = {
+            'popular_searches': [
+                {'term': 'concert', 'count': 150},
+                {'term': 'movie', 'count': 120},
+                {'term': 'theater', 'count': 95},
+                {'term': 'comedy', 'count': 80},
+                {'term': 'action', 'count': 75},
+            ],
+            'trending_categories': [
+                {'category': 'Music', 'growth': 25.5},
+                {'category': 'Comedy', 'growth': 18.2},
+                {'category': 'Drama', 'growth': 12.8},
+                {'category': 'Action', 'growth': 8.5},
+            ],
+            'search_volume': {
+                'today': 1250,
+                'yesterday': 1180,
+                'this_week': 8500,
+                'last_week': 7800,
+            }
+        }
+        
+        return Response(analytics_data)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to get search analytics: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
 @permission_classes([permissions.AllowAny])
 def get_similar_content(request, content_type, content_id):
     """

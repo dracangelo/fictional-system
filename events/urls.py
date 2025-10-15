@@ -19,6 +19,8 @@ urlpatterns = [
     path('search/movies/', search_views.search_movies, name='search-movies'),
     path('search/popular/', search_views.get_popular_searches, name='popular-searches'),
     path('search/nearby/', search_views.search_nearby, name='search-nearby'),
+    path('search/history/', search_views.get_search_history, name='search-history'),
+    path('search/analytics/', search_views.get_search_analytics, name='search-analytics'),
     
     # Recommendation endpoints
     path('recommendations/', search_views.get_recommendations, name='recommendations'),

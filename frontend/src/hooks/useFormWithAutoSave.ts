@@ -1,4 +1,38 @@
-import { useForm, UseFormProps, UseFormReturn, FieldValues, Path } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
+
+// Define types locally to avoid import issues with react-hook-form
+type FieldValues = Record<string, any>;
+type Path<T> = keyof T;
+
+interface UseFormProps<T extends FieldValues = FieldValues> {
+  mode?: 'onChange' | 'onBlur' | 'onSubmit' | 'onTouched' | 'all';
+  reValidateMode?: 'onChange' | 'onBlur' | 'onSubmit';
+  defaultValues?: Partial<T>;
+  resolver?: any;
+  context?: any;
+  criteriaMode?: 'firstError' | 'all';
+  shouldFocusError?: boolean;
+  shouldUnregister?: boolean;
+  shouldUseNativeValidation?: boolean;
+  delayError?: number;
+}
+
+interface UseFormReturn<T extends FieldValues = FieldValues> {
+  watch: (names?: keyof T | (keyof T)[] | ((data: T, options: any) => any)) => any;
+  getValues: (payload?: keyof T | (keyof T)[]) => T;
+  reset: (values?: Partial<T>, options?: any) => void;
+  trigger: (name?: keyof T | (keyof T)[], options?: any) => Promise<boolean>;
+  setError: (name: keyof T, error: { message?: string; type?: string }) => void;
+  clearErrors: (name?: keyof T | (keyof T)[]) => void;
+  setValue: (name: keyof T, value: any, options?: any) => void;
+  getFieldState: (name: keyof T) => any;
+  formState: any;
+  control: any;
+  register: any;
+  handleSubmit: any;
+  unregister: any;
+  setFocus: any;
+}
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useCallback, useRef } from 'react';
 import { z } from 'zod';

@@ -1,4 +1,21 @@
-import { useQuery, useMutation, useQueryClient, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+// Define types locally to avoid import issues
+type UseQueryOptions<TData = unknown, TError = Error> = {
+  enabled?: boolean;
+  staleTime?: number;
+  cacheTime?: number;
+  refetchOnWindowFocus?: boolean;
+  retry?: boolean | number;
+  [key: string]: any;
+};
+
+type UseMutationOptions<TData = unknown, TError = Error, TVariables = void> = {
+  onSuccess?: (data: TData, variables: TVariables) => void;
+  onError?: (error: TError, variables: TVariables) => void;
+  onMutate?: (variables: TVariables) => void;
+  [key: string]: any;
+};
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useDebounce } from './useDebounce';
 import { searchService } from '../services/search';
@@ -230,7 +247,7 @@ export function useSearchInterface(initialQuery: string = '', initialFilters?: A
 
   // Update local search history
   useEffect(() => {
-    if (historyData) {
+    if (historyData && Array.isArray(historyData)) {
       setSearchHistory(historyData.map(h => h.query));
     }
   }, [historyData]);
