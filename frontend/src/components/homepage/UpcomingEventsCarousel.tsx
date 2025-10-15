@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button, Card, Badge } from '../ui';
-import { ChevronLeftIcon, ChevronRightIcon, CalendarIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import { SwipeCarousel } from '../ui/SwipeCarousel';
+import { CalendarIcon, MapPinIcon } from '@heroicons/react/24/outline';
 
 interface Event {
   id: string;
@@ -92,36 +93,7 @@ const mockEvents: Event[] = [
 ];
 
 export const UpcomingEventsCarousel: React.FC = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [events] = useState<Event[]>(mockEvents);
-  const [itemsPerView, setItemsPerView] = useState(3);
-
-  // Responsive items per view
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 640) {
-        setItemsPerView(1);
-      } else if (window.innerWidth < 1024) {
-        setItemsPerView(2);
-      } else {
-        setItemsPerView(3);
-      }
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const maxIndex = Math.max(0, events.length - itemsPerView);
-
-  const nextSlide = () => {
-    setCurrentIndex(prev => (prev >= maxIndex ? 0 : prev + 1));
-  };
-
-  const prevSlide = () => {
-    setCurrentIndex(prev => (prev <= 0 ? maxIndex : prev - 1));
-  };
 
   const handleEventClick = (event: Event) => {
     console.log('Event clicked:', event);
@@ -163,141 +135,98 @@ export const UpcomingEventsCarousel: React.FC = () => {
     <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
         {/* Section Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Upcoming Events
-            </h2>
-            <p className="text-gray-600">
-              Don't miss out on these exciting upcoming events
-            </p>
-          </div>
-          
-          {/* Navigation Buttons */}
-          <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={prevSlide}
-              disabled={currentIndex === 0}
-              className="p-2"
-            >
-              <ChevronLeftIcon className="w-5 h-5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={nextSlide}
-              disabled={currentIndex >= maxIndex}
-              className="p-2"
-            >
-              <ChevronRightIcon className="w-5 h-5" />
-            </Button>
-          </div>
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            Upcoming Events
+          </h2>
+          <p className="text-gray-600">
+            Don't miss out on these exciting upcoming events
+          </p>
         </div>
 
-        {/* Carousel */}
-        <div className="relative overflow-hidden">
-          <div 
-            className="flex transition-transform duration-300 ease-in-out"
-            style={{
-              transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)`
-            }}
-          >
-            {events.map((event) => (
-              <div
-                key={event.id}
-                className="flex-shrink-0 px-3"
-                style={{ width: `${100 / itemsPerView}%` }}
+        {/* Swipe Carousel */}
+        <SwipeCarousel
+          itemsPerView={{ mobile: 1, tablet: 2, desktop: 3 }}
+          showArrows={true}
+          showDots={true}
+          autoPlay={true}
+          autoPlayInterval={6000}
+          className="mb-6"
+        >
+          {events.map((event) => (
+            <Card key={event.id} className="group cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full mx-3">
+              <div 
+                className="relative overflow-hidden rounded-t-lg"
+                onClick={() => handleEventClick(event)}
               >
-                <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full">
-                  <div 
-                    className="relative overflow-hidden rounded-t-lg"
-                    onClick={() => handleEventClick(event)}
-                  >
-                    <img
-                      src={event.posterUrl}
-                      alt={event.title}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    
-                    {/* Category Badge */}
-                    <div className="absolute top-3 left-3">
-                      <Badge className={getCategoryColor(event.category)}>
-                        {event.category}
-                      </Badge>
-                    </div>
+                <img
+                  src={event.posterUrl}
+                  alt={event.title}
+                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                
+                {/* Category Badge */}
+                <div className="absolute top-3 left-3">
+                  <Badge className={getCategoryColor(event.category)}>
+                    {event.category}
+                  </Badge>
+                </div>
 
-                    {/* Tickets Available Badge */}
-                    {event.ticketsAvailable < 50 && (
-                      <div className="absolute top-3 right-3">
-                        <Badge className="bg-red-500 text-white">
-                          Only {event.ticketsAvailable} left!
-                        </Badge>
-                      </div>
+                {/* Tickets Available Badge */}
+                {event.ticketsAvailable < 50 && (
+                  <div className="absolute top-3 right-3">
+                    <Badge className="bg-red-500 text-white">
+                      Only {event.ticketsAvailable} left!
+                    </Badge>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-5 flex flex-col flex-grow">
+                <h3 className="font-bold text-xl mb-2 text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+                  {event.title}
+                </h3>
+                
+                <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-grow">
+                  {event.description}
+                </p>
+
+                {/* Event Details */}
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center text-sm text-gray-600">
+                    <CalendarIcon className="w-4 h-4 mr-2 text-blue-500" />
+                    <span>{formatDate(event.startDateTime)} at {formatTime(event.startDateTime)}</span>
+                  </div>
+                  
+                  <div className="flex items-center text-sm text-gray-600">
+                    <MapPinIcon className="w-4 h-4 mr-2 text-red-500" />
+                    <span className="truncate">{event.venue}, {event.address}</span>
+                  </div>
+                </div>
+
+                {/* Price and Book Button */}
+                <div className="flex items-center justify-between">
+                  <div className="text-lg font-bold text-gray-900">
+                    ${event.minPrice === event.maxPrice ? (
+                      `${event.minPrice}`
+                    ) : (
+                      `${event.minPrice} - ${event.maxPrice}`
                     )}
                   </div>
-
-                  <div className="p-5 flex flex-col flex-grow">
-                    <h3 className="font-bold text-xl mb-2 text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
-                      {event.title}
-                    </h3>
-                    
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-grow">
-                      {event.description}
-                    </p>
-
-                    {/* Event Details */}
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <CalendarIcon className="w-4 h-4 mr-2 text-blue-500" />
-                        <span>{formatDate(event.startDateTime)} at {formatTime(event.startDateTime)}</span>
-                      </div>
-                      
-                      <div className="flex items-center text-sm text-gray-600">
-                        <MapPinIcon className="w-4 h-4 mr-2 text-red-500" />
-                        <span className="truncate">{event.venue}, {event.address}</span>
-                      </div>
-                    </div>
-
-                    {/* Price and Book Button */}
-                    <div className="flex items-center justify-between">
-                      <div className="text-lg font-bold text-gray-900">
-                        {event.minPrice === event.maxPrice ? (
-                          `$${event.minPrice}`
-                        ) : (
-                          `$${event.minPrice} - $${event.maxPrice}`
-                        )}
-                      </div>
-                      
-                      <Button 
-                        variant="primary" 
-                        size="sm"
-                        onClick={() => handleEventClick(event)}
-                        className="px-6"
-                      >
-                        Book Now
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
+                  
+                  <Button 
+                    variant="primary" 
+                    size="sm"
+                    onClick={() => handleEventClick(event)}
+                    className="px-6"
+                  >
+                    Book Now
+                  </Button>
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Dots Indicator */}
-        <div className="flex justify-center mt-6 space-x-2">
-          {Array.from({ length: maxIndex + 1 }).map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentIndex(index)}
-              className={`w-3 h-3 rounded-full transition-colors ${
-                index === currentIndex ? 'bg-blue-600' : 'bg-gray-300'
-              }`}
-            />
+            </Card>
           ))}
-        </div>
+        </SwipeCarousel>
 
         {/* View All Button */}
         <div className="text-center mt-8">

@@ -50,16 +50,34 @@ const SeatLegend: React.FC<SeatLegendProps> = ({ className, compact = false }) =
   return (
     <Card className={className} padding="sm">
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-900">Seat Legend</h3>
+        <h3 
+          className="text-sm font-semibold text-gray-900"
+          id="seat-legend-title"
+        >
+          Seat Legend
+        </h3>
         
-        <div className={`grid gap-2 ${compact ? 'grid-cols-2' : 'grid-cols-1'}`}>
+        <div 
+          className={`grid gap-2 ${compact ? 'grid-cols-2' : 'grid-cols-1'}`}
+          role="list"
+          aria-labelledby="seat-legend-title"
+        >
           {legendItems.map((item) => (
-            <div key={item.status} className="flex items-center gap-3">
+            <div 
+              key={item.status} 
+              className="flex items-center gap-3"
+              role="listitem"
+            >
               <div 
                 className={`w-6 h-6 rounded-t-lg border-2 flex items-center justify-center text-xs ${item.color}`}
+                role="img"
+                aria-label={`${item.label} seat indicator`}
               >
                 {item.status === 'vip' && (
-                  <div className="w-1.5 h-1.5 bg-amber-400 rounded-full" />
+                  <div 
+                    className="w-1.5 h-1.5 bg-amber-400 rounded-full"
+                    aria-hidden="true"
+                  />
                 )}
               </div>
               
@@ -80,7 +98,8 @@ const SeatLegend: React.FC<SeatLegendProps> = ({ className, compact = false }) =
         {!compact && (
           <div className="pt-2 border-t border-gray-200">
             <p className="text-xs text-gray-500">
-              Click on available seats to select them. VIP seats offer premium comfort and amenities.
+              Click on available seats to select them. Use arrow keys to navigate and Enter or Space to select. 
+              VIP seats offer premium comfort and amenities.
             </p>
           </div>
         )}

@@ -18,3 +18,6 @@ export * from './theaters';
 
 // Booking Components
 export * from './booking';
+
+// Search Components
+export * from './search';

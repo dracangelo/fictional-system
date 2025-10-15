@@ -7,3 +7,5 @@ export * from './booking';
 export * from './user';
 export * from './payment';
 export * from './notification';
+export * from './admin';
+export * from './search';

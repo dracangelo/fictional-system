@@ -5,3 +5,5 @@ export * from './event';
 export * from './theater';
 export * from './booking';
 export * from './seat';
+export * from './admin';
+export * from './notification';

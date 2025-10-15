@@ -42,6 +42,10 @@ export interface ButtonProps
   loading?: boolean
   leftIcon?: React.ReactNode
   rightIcon?: React.ReactNode
+  'aria-label'?: string
+  'aria-describedby'?: string
+  'aria-expanded'?: boolean
+  'aria-pressed'?: boolean
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -56,6 +60,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       rightIcon,
       children,
       disabled,
+      'aria-label': ariaLabel,
+      'aria-describedby': ariaDescribedBy,
+      'aria-expanded': ariaExpanded,
+      'aria-pressed': ariaPressed,
       ...props
     },
     ref
@@ -67,6 +75,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         disabled={isDisabled}
+        aria-label={loading ? `${ariaLabel || children} (loading)` : ariaLabel}
+        aria-describedby={ariaDescribedBy}
+        aria-expanded={ariaExpanded}
+        aria-pressed={ariaPressed}
+        aria-busy={loading ? 'true' : undefined}
         {...props}
       >
         {loading && (
@@ -75,6 +88,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <circle
               className="opacity-25"
@@ -91,9 +105,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             />
           </svg>
         )}
-        {!loading && leftIcon && <span className="mr-2">{leftIcon}</span>}
+        {!loading && leftIcon && <span className="mr-2" aria-hidden="true">{leftIcon}</span>}
         {children}
-        {!loading && rightIcon && <span className="ml-2">{rightIcon}</span>}
+        {!loading && rightIcon && <span className="ml-2" aria-hidden="true">{rightIcon}</span>}
       </button>
     )
   }

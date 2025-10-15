@@ -1,15 +1,26 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute, PublicRoute } from '../components/common';
-import {
-  LoginPage,
-  RegisterPage,
-  ForgotPasswordPage,
-  ResetPasswordPage,
-  UnauthorizedPage,
-  DashboardPage,
-  HomePage,
-} from '../pages';
+
+// Import pages normally for now (lazy loading can be added later when pages are properly exported)
+import HomePage from '../pages/HomePage';
+import LoginPage from '../pages/auth/LoginPage';
+import RegisterPage from '../pages/auth/RegisterPage';
+import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
+import UnauthorizedPage from '../pages/auth/UnauthorizedPage';
+import DashboardPage from '../pages/dashboard/DashboardPage';
 import CheckoutDemo from '../pages/CheckoutDemo';
+import EventListingPage from '../pages/events/EventListingPage';
+import SearchResultsPage from '../pages/events/SearchResultsPage';
+import EventOwnerDashboard from '../pages/events/EventOwnerDashboard';
+import TheaterOwnerDashboardPage from '../pages/theaters/TheaterOwnerDashboardPage';
+import AdminDashboard from '../pages/admin/AdminDashboard';
+import UserManagement from '../pages/admin/UserManagement';
+import ContentModeration from '../pages/admin/ContentModeration';
+import AuditLog from '../pages/admin/AuditLog';
+import CustomerDashboard from '../pages/dashboard/CustomerDashboard';
+
+
 
 export const router = createBrowserRouter([
   {
@@ -61,6 +72,14 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: '/customer-dashboard',
+    element: (
+      <ProtectedRoute requiredRoles={['customer', 'admin']}>
+        <CustomerDashboard />
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: '/checkout-demo',
     element: <CheckoutDemo />,
   },
@@ -69,15 +88,19 @@ export const router = createBrowserRouter([
     path: '/events',
     element: (
       <ProtectedRoute requiredRoles={['customer', 'admin']}>
-        <div>Events Page - Coming Soon</div>
+        <EventListingPage />
       </ProtectedRoute>
     ),
+  },
+  {
+    path: '/search',
+    element: <SearchResultsPage />,
   },
   {
     path: '/bookings',
     element: (
       <ProtectedRoute requiredRoles={['customer', 'admin']}>
-        <div>My Bookings - Coming Soon</div>
+        <CustomerDashboard />
       </ProtectedRoute>
     ),
   },
@@ -86,7 +109,7 @@ export const router = createBrowserRouter([
     path: '/manage-events',
     element: (
       <ProtectedRoute requiredRoles={['event_owner', 'admin']}>
-        <div>Manage Events - Coming Soon</div>
+        <EventOwnerDashboard />
       </ProtectedRoute>
     ),
   },
@@ -95,7 +118,7 @@ export const router = createBrowserRouter([
     path: '/manage-theaters',
     element: (
       <ProtectedRoute requiredRoles={['theater_owner', 'admin']}>
-        <div>Manage Theaters - Coming Soon</div>
+        <TheaterOwnerDashboardPage />
       </ProtectedRoute>
     ),
   },
@@ -104,7 +127,31 @@ export const router = createBrowserRouter([
     path: '/admin',
     element: (
       <ProtectedRoute requiredRoles={['admin']}>
-        <div>Admin Panel - Coming Soon</div>
+        <AdminDashboard />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/users',
+    element: (
+      <ProtectedRoute requiredRoles={['admin']}>
+        <UserManagement />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/content',
+    element: (
+      <ProtectedRoute requiredRoles={['admin']}>
+        <ContentModeration />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/audit',
+    element: (
+      <ProtectedRoute requiredRoles={['admin']}>
+        <AuditLog />
       </ProtectedRoute>
     ),
   },
