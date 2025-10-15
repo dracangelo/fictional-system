@@ -47,5 +47,5 @@ urlpatterns = [
     path('upcoming/', views.upcoming_bookings, name='upcoming_bookings'),
     
     # Analytics endpoints
-    path('analytics/', include('bookings.analytics_urls')),
+    path('analytics/', include(('bookings.analytics_urls', 'bookings.analytics'), namespace='analytics')),
 ]

@@ -1,5 +1,5 @@
 import { io, Socket } from 'socket.io-client';
-import { RealTimeEvent } from '../../types/notification';
+import type { RealTimeEvent } from '../../types';
 
 export class SocketService {
   private socket: Socket | null = null;

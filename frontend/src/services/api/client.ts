@@ -1,5 +1,52 @@
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosError } from 'axios';
 import { storeOfflineAction, isOffline } from '../../utils/serviceWorker';
+
+interface RetryConfig {
+  retries: number;
+  retryDelay: number;
+  retryCondition?: (error: AxiosError) => boolean;
+}
+
+// Type aliases for axios types to maintain compatibility
+type AxiosResponse<T = any> = {
+  data: T;
+  status: number;
+  statusText: string;
+  headers: any;
+  config: any;
+  request?: any;
+};
+
+type InternalAxiosRequestConfig = {
+  url?: string;
+  method?: string;
+  baseURL?: string;
+  headers?: any;
+  params?: any;
+  data?: any;
+  timeout?: number;
+  withCredentials?: boolean;
+  responseType?: 'json' | 'text' | 'blob' | 'arraybuffer' | 'document' | 'stream';
+  maxRedirects?: number;
+  validateStatus?: (status: number) => boolean;
+  _retry?: boolean;
+  _retryCount?: number;
+  _retryConfig?: RetryConfig;
+};
+
+type RequestConfig = {
+  url?: string;
+  method?: string;
+  baseURL?: string;
+  headers?: any;
+  params?: any;
+  data?: any;
+  timeout?: number;
+  withCredentials?: boolean;
+  responseType?: 'json' | 'text' | 'blob' | 'arraybuffer' | 'document' | 'stream';
+  maxRedirects?: number;
+  validateStatus?: (status: number) => boolean;
+};
 
 interface ApiError {
   message: string;
@@ -14,12 +61,6 @@ interface ApiErrorResponse {
     field: string;
     message: string;
   }>;
-}
-
-interface RetryConfig {
-  retries: number;
-  retryDelay: number;
-  retryCondition?: (error: AxiosError) => boolean;
 }
 
 class ApiClient {
@@ -63,7 +104,7 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response: AxiosResponse) => response,
       async (error: AxiosError) => {
-        const originalRequest = error.config as AxiosRequestConfig & { 
+        const originalRequest = error.config as InternalAxiosRequestConfig & { 
           _retry?: boolean; 
           _retryCount?: number;
           _retryConfig?: RetryConfig;
@@ -159,7 +200,7 @@ class ApiClient {
   }
 
   private async handleOfflineRequest(
-    originalRequest: AxiosRequestConfig,
+    originalRequest: InternalAxiosRequestConfig,
     error: AxiosError
   ): Promise<never> {
     // Store the request for later processing when online
@@ -252,7 +293,7 @@ class ApiClient {
   }
 
   // HTTP methods with enhanced error handling
-  async get<T>(url: string, config?: AxiosRequestConfig & { retryConfig?: RetryConfig }): Promise<T> {
+  async get<T>(url: string, config?: RequestConfig & { retryConfig?: RetryConfig }): Promise<T> {
     const { retryConfig, ...axiosConfig } = config || {};
     const requestConfig = {
       ...axiosConfig,
@@ -263,7 +304,7 @@ class ApiClient {
     return response.data;
   }
 
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig & { retryConfig?: RetryConfig }): Promise<T> {
+  async post<T>(url: string, data?: any, config?: RequestConfig & { retryConfig?: RetryConfig }): Promise<T> {
     const { retryConfig, ...axiosConfig } = config || {};
     const requestConfig = {
       ...axiosConfig,
@@ -274,7 +315,7 @@ class ApiClient {
     return response.data;
   }
 
-  async put<T>(url: string, data?: any, config?: AxiosRequestConfig & { retryConfig?: RetryConfig }): Promise<T> {
+  async put<T>(url: string, data?: any, config?: RequestConfig & { retryConfig?: RetryConfig }): Promise<T> {
     const { retryConfig, ...axiosConfig } = config || {};
     const requestConfig = {
       ...axiosConfig,
@@ -285,7 +326,7 @@ class ApiClient {
     return response.data;
   }
 
-  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig & { retryConfig?: RetryConfig }): Promise<T> {
+  async patch<T>(url: string, data?: any, config?: RequestConfig & { retryConfig?: RetryConfig }): Promise<T> {
     const { retryConfig, ...axiosConfig } = config || {};
     const requestConfig = {
       ...axiosConfig,
@@ -296,7 +337,7 @@ class ApiClient {
     return response.data;
   }
 
-  async delete<T>(url: string, config?: AxiosRequestConfig & { retryConfig?: RetryConfig }): Promise<T> {
+  async delete<T>(url: string, config?: RequestConfig & { retryConfig?: RetryConfig }): Promise<T> {
     const { retryConfig, ...axiosConfig } = config || {};
     const requestConfig = {
       ...axiosConfig,
@@ -326,7 +367,7 @@ class ApiClient {
     method: 'get' | 'post' | 'put' | 'patch' | 'delete',
     url: string,
     data?: any,
-    config?: AxiosRequestConfig,
+    config?: RequestConfig,
     maxRetries: number = 3
   ): Promise<T> {
     let lastError: Error;

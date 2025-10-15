@@ -7,7 +7,7 @@ import {
   ComputerDesktopIcon 
 } from '@heroicons/react/24/outline';
 import { cn } from '../../utils/cn';
-import { NotificationPreferences as NotificationPreferencesType } from '../../types/notification';
+import type { NotificationPreferences as NotificationPreferencesType } from '../../types';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';

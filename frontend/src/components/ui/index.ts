@@ -29,3 +29,8 @@ export { SlideUpModal } from './SlideUpModal'
 export { SwipeCarousel } from './SwipeCarousel'
 export { FormProgress, CompactProgress, StepNavigation } from './FormProgress'
 export { FormField, ValidatedInput, PasswordInput, ValidatedTextArea } from './FormField'
+
+// Re-export common components for convenience
+export { EmptyState } from '../common/EmptyState'
+export { LoadingSpinner } from '../common/LoadingSpinner'
+export { Pagination } from '../common/Pagination'

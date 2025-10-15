@@ -194,7 +194,7 @@ const ContentItem: React.FC<ContentItemProps> = ({ item, onModerate }) => {
   );
 };
 
-export const ContentModeration: React.FC = () => {
+const ContentModeration: React.FC = () => {
   const [items, setItems] = useState<ContentModerationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -361,3 +361,5 @@ export const ContentModeration: React.FC = () => {
     </div>
   );
 };
+
+export default ContentModeration;

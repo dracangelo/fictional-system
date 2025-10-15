@@ -139,7 +139,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   );
 };
 
-export const AuditLog: React.FC = () => {
+const AuditLog: React.FC = () => {
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -357,3 +357,5 @@ export const AuditLog: React.FC = () => {
     </div>
   );
 };
+
+export default AuditLog;

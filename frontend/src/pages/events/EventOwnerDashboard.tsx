@@ -10,7 +10,7 @@ import { EventForm } from '../../components/events/EventForm';
 import { EventAnalytics } from '../../components/events/EventAnalytics';
 import type { Event } from '../../types/event';
 
-export const EventOwnerDashboard: React.FC = () => {
+const EventOwnerDashboard: React.FC = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showAnalytics, setShowAnalytics] = useState<string | null>(null);
@@ -250,3 +250,5 @@ export const EventOwnerDashboard: React.FC = () => {
     </div>
   );
 };
+
+export default EventOwnerDashboard;

@@ -1,5 +1,17 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { UseFormRegisterReturn, FieldError } from 'react-hook-form';
+
+// Define types locally to avoid import issues with react-hook-form
+interface FieldError {
+  type: string;
+  message?: string;
+}
+
+interface UseFormRegisterReturn {
+  onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onBlur: (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  name: string;
+  ref: React.Ref<HTMLInputElement | HTMLTextAreaElement>;
+}
 import { Eye, EyeOff, Check, X, AlertCircle, Info } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useDebounce } from '../../hooks/useDebounce';

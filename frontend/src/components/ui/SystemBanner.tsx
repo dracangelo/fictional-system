@@ -7,7 +7,7 @@ import {
   XMarkIcon 
 } from '@heroicons/react/24/outline';
 import { cn } from '../../utils/cn';
-import { SystemBanner as SystemBannerType } from '../../types/notification';
+import type { SystemBanner as SystemBannerType } from '../../types';
 
 interface SystemBannerProps {
   banner: SystemBannerType;

@@ -7,7 +7,7 @@ import {
   XMarkIcon 
 } from '@heroicons/react/24/outline';
 import { cn } from '../../utils/cn';
-import { Notification, NotificationAction } from '../../types/notification';
+import type { Notification, NotificationAction } from '../../types';
 
 interface ToastProps {
   notification: Notification;

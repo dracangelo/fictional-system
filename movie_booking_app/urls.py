@@ -37,13 +37,13 @@ urlpatterns = [
     
     # Versioned API Endpoints
     # V1 (current stable)
-    path('api/v1/auth/', include('users.urls')),
-    path('api/v1/', include('events.urls')),
-    path('api/v1/', include('theaters.urls')),
-    path('api/v1/', include('bookings.urls')),
-    path('api/v1/notifications/', include('notifications.urls')),
+    path('api/v1/auth/', include(('users.urls', 'users'), namespace='users-v1')),
+    path('api/v1/', include(('events.urls', 'events'), namespace='events-v1')),
+    path('api/v1/', include(('theaters.urls', 'theaters'), namespace='theaters-v1')),
+    path('api/v1/', include(('bookings.urls', 'bookings'), namespace='bookings-v1')),
+    path('api/v1/notifications/', include(('notifications.urls', 'notifications'), namespace='notifications-v1')),
     
-    # Default to v1 for backward compatibility
+    # Default to v1 for backward compatibility (without namespace to maintain compatibility)
     path('api/auth/', include('users.urls')),
     path('api/', include('events.urls')),
     path('api/', include('theaters.urls')),

@@ -1,4 +1,7 @@
 import { useQuery, useMutation, useQueryClient, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
+
+// Re-export the base hooks for convenience
+export { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { eventService } from '../services/event/eventService';
 import { bookingService } from '../services/booking/bookingService';
 import { userService } from '../services/user/userService';

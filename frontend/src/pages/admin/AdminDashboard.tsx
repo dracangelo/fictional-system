@@ -116,7 +116,7 @@ const HealthIndicator: React.FC<HealthIndicatorProps> = ({ indicator }) => {
   );
 };
 
-export const AdminDashboard: React.FC = () => {
+const AdminDashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
   const [healthIndicators, setHealthIndicators] = useState<SystemHealthIndicator[]>([]);
   const [loading, setLoading] = useState(true);
@@ -291,3 +291,5 @@ export const AdminDashboard: React.FC = () => {
     </div>
   );
 };
+
+export default AdminDashboard;

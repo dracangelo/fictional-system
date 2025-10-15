@@ -23,5 +23,5 @@ urlpatterns = [
     path('permissions/', views.user_permissions, name='user_permissions'),
     
     # Admin endpoints
-    path('admin/', include('users.admin_urls')),
+    path('admin/', include(('users.admin_urls', 'users.admin'), namespace='admin')),
 ]

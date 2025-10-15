@@ -11,7 +11,7 @@ import { RecommendedEvents } from '../../components/booking/RecommendedEvents';
 import type { Booking } from '../../types/booking';
 import type { Event } from '../../types/event';
 
-export const CustomerDashboard: React.FC = () => {
+const CustomerDashboard: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'wishlist'>('overview');
 
@@ -235,3 +235,5 @@ export const CustomerDashboard: React.FC = () => {
     </div>
   );
 };
+
+export default CustomerDashboard;

@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '../../contexts';
 import { Button, Card } from '../../components/ui';
 
-export const DashboardPage: React.FC = () => {
+const DashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
 
   const handleLogout = async () => {
@@ -110,3 +110,5 @@ export const DashboardPage: React.FC = () => {
     </div>
   );
 };
+
+export default DashboardPage;

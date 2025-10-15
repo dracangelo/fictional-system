@@ -182,7 +182,7 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ isOpen, onClose, onCo
   );
 };
 
-export const UserManagement: React.FC = () => {
+const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<UserManagementData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -375,3 +375,5 @@ export const UserManagement: React.FC = () => {
     </div>
   );
 };
+
+export default UserManagement;

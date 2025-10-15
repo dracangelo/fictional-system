@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
-import { 
+import type { 
   Notification, 
   SystemBanner, 
   NotificationPreferences,
   RealTimeEvent 
-} from '../types/notification';
+} from '../types';
 import { getSocketService } from '../services/notification/socketService';
 import { useAuth } from './AuthContext';
 
