@@ -1,225 +1,339 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import { EventCard } from '../EventCard';
-import type { Event } from '../../../types/event';
+import React from 'react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, it, expect, vi } from 'vitest'
+import { renderWithProviders } from '../../../test/utils'
+import { EventCard } from '../EventCard'
 
-import { vi } from 'vitest';
+const mockEvent = {
+  id: '1',
+  title: 'Test Concert',
+  description: 'A great concert featuring amazing artists',
+  venue: 'Concert Hall',
+  address: '123 Music Street, City',
+  start_datetime: '2024-12-01T19:00:00Z',
+  end_datetime: '2024-12-01T22:00:00Z',
+  category: 'music',
+  image: '/test-image.jpg',
+  price_range: { min: 25, max: 50 },
+  status: 'published',
+  ticket_types: [
+    { id: '1', name: 'General', price: '25.00', quantity_available: 100 },
+    { id: '2', name: 'VIP', price: '50.00', quantity_available: 20 },
+  ],
+}
 
-// Mock react-router-dom
-const mockNavigate = vi.fn();
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom');
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
-});
-
-const renderWithRouter = (component: React.ReactElement) => {
-  return render(<BrowserRouter>{component}</BrowserRouter>);
-};
-
-describe('EventCard', () => {
-  const mockEvent: Event = {
-    id: '1',
-    owner: 'owner-1',
-    title: 'Test Concert',
-    description: 'A great concert event',
-    venue: 'Test Venue',
-    address: '123 Test St',
-    category: 'concert',
-    start_datetime: '2024-01-15T19:00:00Z',
-    end_datetime: '2024-01-15T22:00:00Z',
-    media: ['https://example.com/image.jpg'],
-    status: 'published',
-    is_active: true,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
-    ticket_types: [
-      {
-        id: '1',
-        event: '1',
-        name: 'General',
-        price: 50,
-        quantity_available: 100,
-        quantity_sold: 20,
-        description: 'General admission',
-      },
-      {
-        id: '2',
-        event: '1',
-        name: 'VIP',
-        price: 100,
-        quantity_available: 50,
-        quantity_sold: 10,
-        description: 'VIP access',
-      },
-    ],
-  };
-
-  beforeEach(() => {
-    mockNavigate.mockClear();
-  });
-
+describe('EventCard Component', () => {
   it('renders event information correctly', () => {
-    renderWithRouter(<EventCard event={mockEvent} />);
-
-    expect(screen.getByText('Test Concert')).toBeInTheDocument();
-    expect(screen.getByText('Test Venue')).toBeInTheDocument();
-    expect(screen.getByText('A great concert event')).toBeInTheDocument();
-    expect(screen.getByText('concert')).toBeInTheDocument();
-  });
-
-  it('displays formatted date and time', () => {
-    renderWithRouter(<EventCard event={mockEvent} />);
-
-    // Check for date format (Mon, Jan 15)
-    expect(screen.getByText(/Jan 15/)).toBeInTheDocument();
-    // Check for time format (7:00 PM)
-    expect(screen.getByText(/7:00 PM/)).toBeInTheDocument();
-  });
-
-  it('displays minimum price from ticket types', () => {
-    renderWithRouter(<EventCard event={mockEvent} />);
-
-    expect(screen.getByText('$50')).toBeInTheDocument();
-    expect(screen.getByText('Starting from')).toBeInTheDocument();
-  });
-
-  it('displays available tickets count', () => {
-    renderWithRouter(<EventCard event={mockEvent} />);
-
-    // Total available: (100-20) + (50-10) = 120
-    expect(screen.getByText('120 tickets available')).toBeInTheDocument();
-  });
-
-  it('shows "Few Left" badge when tickets are low', () => {
-    const eventWithLowTickets: Event = {
-      ...mockEvent,
-      ticket_types: [
-        {
-          id: '1',
-          event: '1',
-          name: 'General',
-          price: 50,
-          quantity_available: 100,
-          quantity_sold: 95, // Only 5 left
-          description: 'General admission',
-        },
-      ],
-    };
-
-    renderWithRouter(<EventCard event={eventWithLowTickets} />);
-
-    expect(screen.getByText('Few Left')).toBeInTheDocument();
-  });
-
-  it('shows "Sold Out" badge and disables booking when no tickets available', () => {
-    const soldOutEvent: Event = {
-      ...mockEvent,
-      ticket_types: [
-        {
-          id: '1',
-          event: '1',
-          name: 'General',
-          price: 50,
-          quantity_available: 100,
-          quantity_sold: 100, // Sold out
-          description: 'General admission',
-        },
-      ],
-    };
-
-    renderWithRouter(<EventCard event={soldOutEvent} />);
-
-    expect(screen.getByText('Sold Out')).toBeInTheDocument();
+    renderWithProviders(<EventCard event={mockEvent} />)
     
-    const bookButtons = screen.getAllByText('Sold Out');
-    bookButtons.forEach(button => {
-      expect(button).toBeDisabled();
-    });
-  });
+    expect(screen.getByText('Test Concert')).toBeInTheDocument()
+    expect(screen.getByText('Concert Hall')).toBeInTheDocument()
+    expect(screen.getByText(/Dec 1, 2024/)).toBeInTheDocument()
+    expect(screen.getByText(/7:00 PM/)).toBeInTheDocument()
+    expect(screen.getByText('$25 - $50')).toBeInTheDocument()
+  })
 
-  it('shows "Draft" badge for draft events', () => {
-    const draftEvent: Event = {
+  it('displays event image with proper alt text', () => {
+    renderWithProviders(<EventCard event={mockEvent} />)
+    
+    const image = screen.getByRole('img')
+    expect(image).toHaveAttribute('src', '/test-image.jpg')
+    expect(image).toHaveAttribute('alt', 'Test Concert')
+  })
+
+  it('shows fallback image when no image provided', () => {
+    const eventWithoutImage = { ...mockEvent, image: undefined }
+    renderWithProviders(<EventCard event={eventWithoutImage} />)
+    
+    const image = screen.getByRole('img')
+    expect(image).toHaveAttribute('src', '/placeholder-event.jpg')
+  })
+
+  it('displays category badge', () => {
+    renderWithProviders(<EventCard event={mockEvent} />)
+    
+    expect(screen.getByText('Music')).toBeInTheDocument()
+    expect(screen.getByTestId('category-badge')).toHaveClass('category-music')
+  })
+
+  it('shows sold out status when no tickets available', () => {
+    const soldOutEvent = {
       ...mockEvent,
-      status: 'draft',
-    };
-
-    renderWithRouter(<EventCard event={draftEvent} />);
-
-    expect(screen.getByText('Draft')).toBeInTheDocument();
-  });
-
-  it('navigates to event details when card is clicked', () => {
-    renderWithRouter(<EventCard event={mockEvent} />);
-
-    const card = screen.getByText('Test Concert').closest('[role="button"], .cursor-pointer');
-    if (card) {
-      fireEvent.click(card);
-      expect(mockNavigate).toHaveBeenCalledWith('/events/1');
+      ticket_types: [
+        { id: '1', name: 'General', price: '25.00', quantity_available: 0 },
+      ],
     }
-  });
-
-  it('navigates to booking page when book button is clicked', () => {
-    renderWithRouter(<EventCard event={mockEvent} />);
-
-    const bookButton = screen.getAllByText('Book Now')[0];
-    fireEvent.click(bookButton);
-
-    expect(mockNavigate).toHaveBeenCalledWith('/events/1/book');
-  });
-
-  it('displays placeholder image when no media is available', () => {
-    const eventWithoutMedia: Event = {
-      ...mockEvent,
-      media: [],
-    };
-
-    renderWithRouter(<EventCard event={eventWithoutMedia} />);
-
-    // Should show calendar icon as placeholder
-    const calendarIcon = document.querySelector('svg');
-    expect(calendarIcon).toBeInTheDocument();
-  });
-
-  it('displays "Price TBA" when no ticket types are available', () => {
-    const eventWithoutTickets: Event = {
-      ...mockEvent,
-      ticket_types: [],
-    };
-
-    renderWithRouter(<EventCard event={eventWithoutTickets} />);
-
-    expect(screen.getByText('Price TBA')).toBeInTheDocument();
-  });
-
-  it('applies hover effects on mouse enter', () => {
-    renderWithRouter(<EventCard event={mockEvent} />);
-
-    const card = screen.getByText('Test Concert').closest('.group');
-    expect(card).toHaveClass('group');
     
-    // The hover effects are CSS-based, so we just check the classes are present
-    expect(card).toHaveClass('hover:shadow-lg');
-    expect(card).toHaveClass('hover:-translate-y-1');
-  });
+    renderWithProviders(<EventCard event={soldOutEvent} />)
+    
+    expect(screen.getByText('Sold Out')).toBeInTheDocument()
+    expect(screen.getByTestId('sold-out-badge')).toBeInTheDocument()
+  })
 
-  it('handles events with long titles and descriptions', () => {
-    const eventWithLongContent: Event = {
+  it('shows limited tickets warning when few tickets left', () => {
+    const limitedEvent = {
       ...mockEvent,
-      title: 'This is a very long event title that should be truncated when it exceeds the available space',
-      description: 'This is a very long description that should also be truncated when it exceeds the available space in the card layout',
-    };
+      ticket_types: [
+        { id: '1', name: 'General', price: '25.00', quantity_available: 5 },
+      ],
+    }
+    
+    renderWithProviders(<EventCard event={limitedEvent} />)
+    
+    expect(screen.getByText('Only 5 tickets left')).toBeInTheDocument()
+    expect(screen.getByTestId('limited-tickets-warning')).toBeInTheDocument()
+  })
 
-    renderWithRouter(<EventCard event={eventWithLongContent} />);
+  it('handles click to navigate to event details', async () => {
+    const user = userEvent.setup()
+    const mockNavigate = vi.fn()
+    
+    // Mock useNavigate hook
+    vi.mock('react-router-dom', async () => {
+      const actual = await vi.importActual('react-router-dom')
+      return {
+        ...actual,
+        useNavigate: () => mockNavigate,
+      }
+    })
+    
+    renderWithProviders(<EventCard event={mockEvent} />)
+    
+    const card = screen.getByTestId('event-card')
+    await user.click(card)
+    
+    expect(mockNavigate).toHaveBeenCalledWith('/events/1')
+  })
 
-    const title = screen.getByText(eventWithLongContent.title);
-    const description = screen.getByText(eventWithLongContent.description);
+  it('supports keyboard navigation', async () => {
+    const user = userEvent.setup()
+    const mockNavigate = vi.fn()
+    
+    vi.mock('react-router-dom', async () => {
+      const actual = await vi.importActual('react-router-dom')
+      return {
+        ...actual,
+        useNavigate: () => mockNavigate,
+      }
+    })
+    
+    renderWithProviders(<EventCard event={mockEvent} />)
+    
+    const card = screen.getByTestId('event-card')
+    card.focus()
+    
+    await user.keyboard('{Enter}')
+    expect(mockNavigate).toHaveBeenCalledWith('/events/1')
+    
+    await user.keyboard(' ')
+    expect(mockNavigate).toHaveBeenCalledTimes(2)
+  })
 
-    // Check that overflow classes are applied
-    expect(title).toHaveClass('overflow-hidden');
-    expect(description).toHaveClass('overflow-hidden');
-  });
-});
+  it('shows wishlist button for authenticated users', () => {
+    const mockUser = {
+      id: 'user-1',
+      email: 'test@example.com',
+      firstName: 'Test',
+      lastName: 'User',
+      role: 'customer' as const,
+    }
+    
+    renderWithProviders(<EventCard event={mockEvent} />, { user: mockUser })
+    
+    expect(screen.getByRole('button', { name: /add to wishlist/i })).toBeInTheDocument()
+  })
+
+  it('does not show wishlist button for unauthenticated users', () => {
+    renderWithProviders(<EventCard event={mockEvent} />, { user: null })
+    
+    expect(screen.queryByRole('button', { name: /add to wishlist/i })).not.toBeInTheDocument()
+  })
+
+  it('handles wishlist toggle', async () => {
+    const user = userEvent.setup()
+    const mockUser = {
+      id: 'user-1',
+      email: 'test@example.com',
+      firstName: 'Test',
+      lastName: 'User',
+      role: 'customer' as const,
+    }
+    
+    const mockAddToWishlist = vi.fn()
+    const mockRemoveFromWishlist = vi.fn()
+    
+    renderWithProviders(
+      <EventCard 
+        event={mockEvent} 
+        onAddToWishlist={mockAddToWishlist}
+        onRemoveFromWishlist={mockRemoveFromWishlist}
+      />, 
+      { user: mockUser }
+    )
+    
+    const wishlistButton = screen.getByRole('button', { name: /add to wishlist/i })
+    await user.click(wishlistButton)
+    
+    expect(mockAddToWishlist).toHaveBeenCalledWith('1')
+  })
+
+  it('shows different states for past events', () => {
+    const pastEvent = {
+      ...mockEvent,
+      start_datetime: '2023-12-01T19:00:00Z',
+      end_datetime: '2023-12-01T22:00:00Z',
+    }
+    
+    renderWithProviders(<EventCard event={pastEvent} />)
+    
+    expect(screen.getByTestId('event-card')).toHaveClass('event-past')
+    expect(screen.getByText('Past Event')).toBeInTheDocument()
+  })
+
+  it('shows upcoming event indicator', () => {
+    const upcomingEvent = {
+      ...mockEvent,
+      start_datetime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
+    }
+    
+    renderWithProviders(<EventCard event={upcomingEvent} />)
+    
+    expect(screen.getByText(/in \d+ day/)).toBeInTheDocument()
+  })
+
+  it('displays event rating when available', () => {
+    const ratedEvent = {
+      ...mockEvent,
+      rating: 4.5,
+      review_count: 123,
+    }
+    
+    renderWithProviders(<EventCard event={ratedEvent} />)
+    
+    expect(screen.getByText('4.5')).toBeInTheDocument()
+    expect(screen.getByText('(123 reviews)')).toBeInTheDocument()
+    expect(screen.getAllByTestId('star-icon')).toHaveLength(5)
+  })
+
+  it('shows loading state', () => {
+    renderWithProviders(<EventCard event={mockEvent} loading />)
+    
+    expect(screen.getByTestId('event-card-skeleton')).toBeInTheDocument()
+    expect(screen.queryByText('Test Concert')).not.toBeInTheDocument()
+  })
+
+  it('handles image loading errors', async () => {
+    renderWithProviders(<EventCard event={mockEvent} />)
+    
+    const image = screen.getByRole('img')
+    
+    // Simulate image load error
+    fireEvent.error(image)
+    
+    await waitFor(() => {
+      expect(image).toHaveAttribute('src', '/placeholder-event.jpg')
+    })
+  })
+
+  it('shows event tags when available', () => {
+    const taggedEvent = {
+      ...mockEvent,
+      tags: ['rock', 'live-music', 'outdoor'],
+    }
+    
+    renderWithProviders(<EventCard event={taggedEvent} />)
+    
+    expect(screen.getByText('rock')).toBeInTheDocument()
+    expect(screen.getByText('live-music')).toBeInTheDocument()
+    expect(screen.getByText('outdoor')).toBeInTheDocument()
+  })
+
+  it('displays discount badge when event has active discounts', () => {
+    const discountedEvent = {
+      ...mockEvent,
+      has_active_discount: true,
+      discount_percentage: 20,
+    }
+    
+    renderWithProviders(<EventCard event={discountedEvent} />)
+    
+    expect(screen.getByText('20% OFF')).toBeInTheDocument()
+    expect(screen.getByTestId('discount-badge')).toBeInTheDocument()
+  })
+
+  it('shows venue capacity information', () => {
+    const eventWithCapacity = {
+      ...mockEvent,
+      venue_capacity: 500,
+      tickets_sold: 350,
+    }
+    
+    renderWithProviders(<EventCard event={eventWithCapacity} />)
+    
+    expect(screen.getByText('350/500 tickets sold')).toBeInTheDocument()
+    expect(screen.getByTestId('capacity-indicator')).toBeInTheDocument()
+  })
+
+  it('has proper accessibility attributes', () => {
+    renderWithProviders(<EventCard event={mockEvent} />)
+    
+    const card = screen.getByTestId('event-card')
+    expect(card).toHaveAttribute('role', 'article')
+    expect(card).toHaveAttribute('tabindex', '0')
+    expect(card).toHaveAttribute('aria-label', expect.stringContaining('Test Concert'))
+    
+    const image = screen.getByRole('img')
+    expect(image).toHaveAttribute('alt', 'Test Concert')
+    
+    const title = screen.getByRole('heading', { level: 3 })
+    expect(title).toHaveTextContent('Test Concert')
+  })
+
+  it('supports different card sizes', () => {
+    const { rerender } = renderWithProviders(<EventCard event={mockEvent} size="sm" />)
+    expect(screen.getByTestId('event-card')).toHaveClass('event-card-sm')
+    
+    rerender(<EventCard event={mockEvent} size="lg" />)
+    expect(screen.getByTestId('event-card')).toHaveClass('event-card-lg')
+  })
+
+  it('shows quick action buttons on hover', async () => {
+    const user = userEvent.setup()
+    
+    renderWithProviders(<EventCard event={mockEvent} />)
+    
+    const card = screen.getByTestId('event-card')
+    await user.hover(card)
+    
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /quick book/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /share/i })).toBeInTheDocument()
+    })
+  })
+
+  it('handles share functionality', async () => {
+    const user = userEvent.setup()
+    const mockShare = vi.fn()
+    
+    // Mock Web Share API
+    Object.defineProperty(navigator, 'share', {
+      value: mockShare,
+      writable: true,
+    })
+    
+    renderWithProviders(<EventCard event={mockEvent} />)
+    
+    const card = screen.getByTestId('event-card')
+    await user.hover(card)
+    
+    const shareButton = await screen.findByRole('button', { name: /share/i })
+    await user.click(shareButton)
+    
+    expect(mockShare).toHaveBeenCalledWith({
+      title: 'Test Concert',
+      text: 'Check out this event: Test Concert',
+      url: expect.stringContaining('/events/1'),
+    })
+  })
+})
