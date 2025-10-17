@@ -157,6 +157,29 @@ class EventService {
     });
     return response.results;
   }
+
+  // Wishlist management
+  async addToWishlist(eventId: string): Promise<void> {
+    return apiClient.post<void>(`/events/${eventId}/wishlist/`);
+  }
+
+  async removeFromWishlist(eventId: string): Promise<void> {
+    return apiClient.delete<void>(`/events/${eventId}/wishlist/`);
+  }
+
+  async checkWishlistStatus(eventId: string): Promise<boolean> {
+    try {
+      await apiClient.get<void>(`/events/${eventId}/wishlist/`);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async getUserWishlist(): Promise<Event[]> {
+    const response = await apiClient.get<PaginatedResponse<Event>>('/events/wishlist/');
+    return response.results;
+  }
 }
 
 export const eventService = new EventService();

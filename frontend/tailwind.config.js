@@ -106,10 +106,6 @@ export default {
         '18': '4.5rem',
         '88': '22rem',
         '128': '32rem',
-        'safe-top': 'env(safe-area-inset-top)',
-        'safe-bottom': 'env(safe-area-inset-bottom)',
-        'safe-left': 'env(safe-area-inset-left)',
-        'safe-right': 'env(safe-area-inset-right)',
       },
       borderRadius: {
         'xl': '0.75rem',
@@ -162,84 +158,10 @@ export default {
           '100%': { transform: 'translateX(0)', opacity: '1' },
         },
       },
-      },
       screens: {
         'xs': '475px',
-        'sm': '640px',
-        'md': '768px',
-        'lg': '1024px',
-        'xl': '1280px',
-        '2xl': '1536px',
-        'touch': { 'raw': '(hover: none) and (pointer: coarse)' },
-        'no-touch': { 'raw': '(hover: hover) and (pointer: fine)' },
-      },
-      height: {
-        'screen-safe': 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
-        'dvh': '100dvh',
-      },
-      minHeight: {
-        'screen-safe': 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
-        'dvh': '100dvh',
       },
     },
   },
-  plugins: [
-    function({ addUtilities }) {
-      const newUtilities = {
-        '.touch-manipulation': {
-          'touch-action': 'manipulation',
-        },
-        '.touch-pan-x': {
-          'touch-action': 'pan-x',
-        },
-        '.touch-pan-y': {
-          'touch-action': 'pan-y',
-        },
-        '.touch-pinch-zoom': {
-          'touch-action': 'pinch-zoom',
-        },
-        '.touch-none': {
-          'touch-action': 'none',
-        },
-        '.overscroll-none': {
-          'overscroll-behavior': 'none',
-        },
-        '.overscroll-contain': {
-          'overscroll-behavior': 'contain',
-        },
-        '.tap-highlight-transparent': {
-          '-webkit-tap-highlight-color': 'transparent',
-        },
-        '.scrollbar-hide': {
-          '-ms-overflow-style': 'none',
-          'scrollbar-width': 'none',
-          '&::-webkit-scrollbar': {
-            display: 'none',
-          },
-        },
-        '.sr-only': {
-          position: 'absolute',
-          width: '1px',
-          height: '1px',
-          padding: '0',
-          margin: '-1px',
-          overflow: 'hidden',
-          clip: 'rect(0, 0, 0, 0)',
-          whiteSpace: 'nowrap',
-          border: '0',
-        },
-        '.not-sr-only': {
-          position: 'static',
-          width: 'auto',
-          height: 'auto',
-          padding: '0',
-          margin: '0',
-          overflow: 'visible',
-          clip: 'auto',
-          whiteSpace: 'normal',
-        },
-      }
-      addUtilities(newUtilities)
-    }
-  ],
+  plugins: [],
 }

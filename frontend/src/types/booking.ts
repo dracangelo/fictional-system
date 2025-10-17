@@ -1,3 +1,5 @@
+export type BookingStep = 'seats' | 'summary' | 'payment' | 'confirmation';
+
 export interface Booking {
   id: string;
   customer: string;
@@ -91,4 +93,26 @@ export interface SeatAvailability {
   booked_seats: string[];
   locked_seats: string[];
   pricing: Record<string, number>;
+}
+
+export interface Seat {
+  id: string;
+  row: string;
+  number: string;
+  seatNumber: string;
+  type: 'standard' | 'premium' | 'vip';
+  status: 'available' | 'booked' | 'locked' | 'unavailable';
+  priceModifier?: number;
+}
+
+export interface BookingData {
+  id: string;
+  bookingReference: string;
+  event: any;
+  showTime: any;
+  seats: Seat[];
+  totalAmount: number;
+  paymentStatus: string;
+  bookingStatus: string;
+  createdAt: string;
 }

@@ -1,3 +1,4 @@
+// Updated export for Event interface
 export interface Event {
   id: string;
   owner: string;
@@ -8,12 +9,32 @@ export interface Event {
   category: string;
   start_datetime: string;
   end_datetime: string;
+  // Aliases for compatibility with components
+  startDate: string;
+  endDate: string;
+  imageUrl?: string;
   media: string[];
-  status: 'draft' | 'published' | 'cancelled';
+  status: 'draft' | 'published' | 'cancelled' | 'active';
   is_active: boolean;
   created_at: string;
   updated_at: string;
   ticket_types?: TicketType[];
+  showTimes?: ShowTime[];
+  // Additional optional fields
+  duration?: number;
+  language?: string;
+  genre?: string;
+  rating?: number;
+}
+
+export interface ShowTime {
+  id: string;
+  eventId: string;
+  startTime: string;
+  endTime: string;
+  availableSeats: number;
+  totalSeats: number;
+  basePrice: number;
 }
 
 export interface TicketType {

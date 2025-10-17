@@ -1,18 +1,17 @@
 import React from 'react';
 import { cn } from '../../utils/cn';
 
-export interface CheckoutProgressProps {
-  currentStep: 'summary' | 'payment' | 'confirmation';
+export interface CheckoutProgressProps<T extends string = string> {
+  steps: Array<{
+    id: T;
+    name: string;
+    completed: boolean;
+  }>;
+  currentStep: T;
 }
 
-const CheckoutProgress: React.FC<CheckoutProgressProps> = ({ currentStep }) => {
-  const steps = [
-    { id: 'summary', name: 'Review', description: 'Booking details' },
-    { id: 'payment', name: 'Payment', description: 'Secure checkout' },
-    { id: 'confirmation', name: 'Complete', description: 'Confirmation' },
-  ];
-
-  const getStepIndex = (stepId: string) => steps.findIndex(step => step.id === stepId);
+const CheckoutProgress = <T extends string = string>({ steps, currentStep }: CheckoutProgressProps<T>) => {
+  const getStepIndex = (stepId: T) => steps.findIndex(step => step.id === stepId);
   const currentStepIndex = getStepIndex(currentStep);
 
   return (
@@ -66,9 +65,6 @@ const CheckoutProgress: React.FC<CheckoutProgressProps> = ({ currentStep }) => {
                     isCurrent ? 'text-primary-600' : isCompleted ? 'text-gray-900' : 'text-gray-500'
                   )}>
                     {step.name}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {step.description}
                   </span>
                 </div>
               </div>

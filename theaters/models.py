@@ -250,6 +250,9 @@ class Movie(CacheInvalidationMixin, models.Model):
     @property
     def duration_formatted(self):
         """Get formatted duration (e.g., '2h 30m')"""
+        if self.duration is None:
+            return "Not set"
+        
         hours = self.duration // 60
         minutes = self.duration % 60
         
@@ -410,22 +413,28 @@ class Showtime(CacheInvalidationMixin, models.Model):
     @property
     def seats_booked(self):
         """Get number of seats booked"""
+        if self.total_seats is None or self.available_seats is None:
+            return 0
         return self.total_seats - self.available_seats
     
     @property
     def is_sold_out(self):
         """Check if showtime is sold out"""
+        if self.available_seats is None:
+            return False
         return self.available_seats <= 0
     
     @property
     def is_upcoming(self):
         """Check if showtime is upcoming"""
+        if self.start_time is None:
+            return False
         return self.start_time > timezone.now()
     
     @property
     def occupancy_percentage(self):
         """Get occupancy percentage"""
-        if self.total_seats == 0:
+        if self.total_seats is None or self.total_seats == 0:
             return 0
         return round((self.seats_booked / self.total_seats) * 100, 2)
     

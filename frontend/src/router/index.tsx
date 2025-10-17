@@ -11,8 +11,10 @@ import UnauthorizedPage from '../pages/auth/UnauthorizedPage';
 import DashboardPage from '../pages/dashboard/DashboardPage';
 import CheckoutDemo from '../pages/CheckoutDemo';
 import EventListingPage from '../pages/events/EventListingPage';
+import EventDetailPage from '../pages/events/EventDetailPage';
 import SearchResultsPage from '../pages/events/SearchResultsPage';
 import EventOwnerDashboard from '../pages/events/EventOwnerDashboard';
+import BookingPage from '../pages/bookings/BookingPage';
 import TheaterOwnerDashboardPage from '../pages/theaters/TheaterOwnerDashboardPage';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import UserManagement from '../pages/admin/UserManagement';
@@ -86,9 +88,17 @@ export const router = createBrowserRouter([
   // Customer routes
   {
     path: '/events',
+    element: <EventListingPage />,
+  },
+  {
+    path: '/events/:id',
+    element: <EventDetailPage />,
+  },
+  {
+    path: '/events/:id/book',
     element: (
       <ProtectedRoute requiredRoles={['customer', 'admin']}>
-        <EventListingPage />
+        <BookingPage />
       </ProtectedRoute>
     ),
   },
